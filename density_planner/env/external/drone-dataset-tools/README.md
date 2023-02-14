@@ -34,7 +34,7 @@ Thus, this source code not only allows to visualize trajectories and thus get an
    See below for further explanations.
 
 ## Importer
-### tracks_import.py
+### .py
 This module allows to import the tracks, tracks meta info and recording meta info for a single recording 
 (`read_from_csv(tracks_file, tracks_meta_file, recordings_meta_file)`)
 or for all recordings (`read_all_recordings_from_csv(base_path)`).

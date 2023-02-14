@@ -31,7 +31,7 @@ from motion_planning.utils import pos2gridpos
 
 # adding submodules to the system path
 #sys.path.insert(0, './env/external/drone-dataset-tools/src/')
-sys.path.insert(0, '/home/glim/ws/research/density_planner/env/external/drone-dataset-tools/src/')
+sys.path.insert(0, '/home/glim/ws/gpsdynamicplanner/density_planner/env/external/drone-dataset-tools/src/')
 # noinspection PyUnresolvedReferences
 from tracks_import import read_from_csv
 

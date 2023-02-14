@@ -5,7 +5,7 @@ import sys
 from loguru import logger
 
 from track_visualizer import TrackVisualizer, DataError
-from tracks_import import read_from_csv
+from  import read_from_csv
 
 
 def create_args():
