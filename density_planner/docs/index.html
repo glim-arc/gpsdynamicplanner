@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="description"
+        content="Title: Density Planner: Minimizing Collision Risk in Motion Planning with Dynamic Obstacles using Density-based Reachability">
+  <meta name="keywords" content="Collision Risk, Density, Motion Planning">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Density Planner: Density Planner: Minimizing Collision Risk in Motion Planning with Dynamic Obstacles using Density-based Reachability</title>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="./static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+  <link rel="icon" href="./static/images/density.JPG">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <script src="./static/js/bulma-carousel.min.js"></script>
+  <script src="./static/js/bulma-slider.min.js"></script>
+  <script src="./static/js/index.js"></script>
+</head>
+<body>
+
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false">
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+  <div class="navbar-menu">
+    <div class="navbar-start" style="flex-grow: 1; justify-content: center;">
+      <a class="navbar-item" href="https://realm.mit.edu/">
+      <span class="icon">
+          <i class="fas fa-home"></i>
+      </span>
+      </a>
+
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+          More Research
+        </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="https://realm.mit.edu/">
+            REALM Website
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Density Planner: Minimizing Collision Risk in Motion Planning with Dynamic
+Obstacles using Density-based Reachability</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="https://www.linkedin.com/in/laura-l%C3%BCtzow-609b35203/">Laura Lützow</a><sup>1,2</sup>,</span>
+            <span class="author-block">
+              <a href="https://mengyuest.github.io/">Yue Meng</a><sup>2</sup>,</span>
+            <span class="author-block">
+              <a href="https://chavezarmijosa.wixsite.com/chaveza9">Andres Chavez Armijos</a><sup>3</sup>,
+            </span>
+            <span class="author-block">
+              <a href="http://chuchu.mit.edu/">Chuchu Fan</a><sup>2</sup>
+            </span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Technical University of Munich, </span>
+            <span class="author-block"><sup>2</sup>Massachusetts Institute of Technology, </span>
+            <span class="author-block"><sup>3</sup>Boston University</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/2210.02131.pdf"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/2210.02131"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Video Link. -->
+              <span class="link-block">
+                <a href="https://youtu.be/jdwnddtrBnI"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-youtube"></i>
+                  </span>
+                  <span>Video</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/MIT-REALM/density_planner"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            Uncertainty is prevalent in robotics. Due to measurement noise and complex dynamics, 
+            we cannot estimate the exact system and environment state. Since conservative motion 
+            planners are not guaranteed to find a safe control strategy in a crowded, uncertain 
+            environment, we propose a density-based method. Our approach uses a neural network 
+            and the Liouville equation to learn the density evolution for a system with an 
+            uncertain initial state. By applying a gradient-based optimization procedure, we can 
+            plan for feasible and probably safe trajectories to minimize the collision risk. 
+          </p>
+          <p>
+            We conduct motion planning experiments on simulated environments and environments 
+            generated from real-world data and outperform baseline methods such as model 
+            predictive control and nonlinear programming. While our method requires offline 
+            planning, the online run time is 100times smaller compared to model predictive control.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Paper video. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Video</h2>
+        <div class="publication-video">
+          <iframe src="https://www.youtube.com/embed/jdwnddtrBnI?rel=0&amp;showinfo=0"
+                  frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+        </div>
+      </div>
+    </div>
+    <!--/ Paper video. -->
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Problem Formulation. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Problem Formulation</h2>
+        <div class="content has-text-justified">
+          <p>
+            This work solves the problem of defining an optimal control policy for a given autonomous 
+            system and environment setup. The system shall be steered to the goal state while 
+            minimizing the collision probability with dynamic obstacles. Furthermore, the state and 
+            input constraints must be satisfied, and the system dynamics can be nonlinear in the states. 
+          </p>
+          <p>
+            In contrast to classical motion planning problems, we consider an uncertain initial state 
+            following an arbitrary but known probability density function. During the execution of the 
+            control policy, the state can be measured and used for closed-loop control. However, because 
+            of limited computational power and the time constraints for real-time executability, the online 
+            computations of the controller have to be simple. Furthermore, we consider imperfect 
+            measurements due to sensor bias.
+          </p>
+          <p>
+            Additionally, probabilistic predictions for the evolution of the environment are given. Namely, 
+            we know for each position in the environment the probability of it being occupied by an obstacle 
+            at a certain point in time. The position of the vehicle at this time depends on the initial state 
+            and hence also follows a certain probability distribution. The overlap of this state distribution 
+            with the predicted obstacle positions yields the collision probability.
+          </p>
+          <p>
+            Thus, the algorithm should find a general control strategy which minimizes the cost function and 
+            satisfies the constraints for the uncertain initial states despite sensor errors. The motion 
+            planning problems are visualized in the figures below.
+          </p>
+        </div>        
+        <div class="columns is-centered">
+          <div class="column">
+            <img src="./static/images/problem_classical.jpg" alt="motion planning problem">
+            <p> 
+              Classical motion planning problem: The initial state and the environment is considered as known.
+            </p>
+          </div> 
+          <div class="column">            
+            <img src="./static/images/problem_formulation.jpg" alt="motion planning problem">
+            <p> 
+              Motion planning problem considered in this work: The initial state is uncertain and given by an 
+              arbitrary probability distribution. The environment is uncertain and described by occupancy 
+              probabilities.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!--/ Problem Formulation. -->
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Solution. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Proposed Solution</h2>
+        <div class="content has-text-justified">
+          <p>
+            First, we design a tracking controller which uses real-time state measurements to track a reference 
+            trajectory. To guarantee that the considered system stays in the neighborhood of the reference 
+            trajectory despite the initial state uncertainties and disturbances, we will use contraction theory 
+            for the controller synthesis. The synthesis has to be done only once since the controller can be 
+            used for all reference trajectories and hence for all environment setups, as long as the system 
+            dynamics stay the same. 
+          </p>
+          <p>  
+            After defining the tracking controller, the motion planning problem is simplified to finding the optimal 
+            reference trajectory for the closed-loop dynamics. As we want to minimize the collision probability 
+            and have short computation times, we need an efficient way to compute the state density distribution 
+            along different reference trajectories. On this account, we train a neural network which predicts the 
+            evolution of the state density distribution dependent on the reference trajectory and the initial 
+            state distribution. With the neural density predictions, a differentiable collision risk can be 
+            computed efficiently. Now, the reference trajectory can be optimized by minimizing the collision risk 
+            with a gradient-based algorithm.
+          </p>
+          <p>  
+            An example environment and the solution strategy is visualized in the figures below. For better 
+            visualizability, only stationary obstacles are considered.
+          </p>
+        </div>        
+        <div class="columns is-centered">
+          <div class="column">
+            <img src="./static/images/solution1.jpg" alt="solution part 1">
+            <p> 
+              Step 1: The control policy is defined. We will use a tracking controller such that all possible 
+              system trajectories stay close to a given reference trajectory.
+            </p>
+          </div>
+          <div class="column">
+            <img src="./static/images/solution2.jpg" alt="solution part 2">
+            <p> 
+              Step 2: Dependent on the reference trajectory, the density distribution for the controlled system 
+              can be predicted at each time step.
+            </p>
+          </div>        
+          <div class="column">
+            <img src="./static/images/solution3.jpg" alt="solution part 3">
+            <p> 
+              Step 3: The reference trajectory is optimized on the basis of the density predictions in order to 
+              minimize the collision risk.
+            </p>
+          </div>          
+        </div>
+      </div>
+    </div>
+    <!--/ Solution. -->
+  </div>
+</section>
+
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Contributions. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Contributions</h2>
+        <div class="content has-text-justified">
+          <p>
+            Our motion planning approach has several advantages over prior work: The approach is valid for 
+            arbitrary initial probability distributions and nonlinear system dynamics. By predicting the 
+            probability distribution at each point in time, the approach is not over-cautious and can 
+            provide good estimates for the collision probabilities. Because of the neural network 
+            approximation of the closed-loop dynamics and the density function, and an efficient optimization 
+            framework, small planning times can be achieved. The resulting control strategy can be executed 
+            in real-time with low computational complexity. Additionally, the resulting trajectory is optimal 
+            in a given cost criteria and the gradient-based optimization method can easily overcome bad local 
+            minima by comparing the results of different start conditions. 
+          </p>
+          <p>
+            Other main contributions of this work are: 
+          <ol>
+              <li>To the best of our knowledge, we are the first to propose a density-based, differentiable 
+                motion planning procedure for nonlinear systems with state and environment uncertainties.</li>
+              <li>We provide an efficient method to compute the collision probability for closed-loop dynamics 
+                and an effective gradient-based algorithm for probabilistic safe trajectory planning.</li>
+              <li>We test our approach on simulated and real-world testing cases where we outperform state-of-
+                the-art motion planning methods.</li>
+          </ol>
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Contributions. -->
+  </div>
+</section>
+
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@inproceedings{luetzow2023density,
+  author    = {Lützow, Laura and Meng, Yue and Armijos, Andres Chavez and Fan, Chuchu},
+  title     = {Density Planner: Minimizing Collision Risk in Motion Planning with Dynamic Obstacles using Density-based Reachability},
+  booktitle = {IEEE International Conference on Robotics and Automation},
+  year      = {2023},
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This website is licensed under a <a rel="license"
+                                                href="http://creativecommons.org/licenses/by-sa/4.0/">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+          <p>
+            This webpage template is from <a
+              href="https://github.com/nerfies/nerfies.github.io">Nerfies</a>. We sincerely thank <a href="https://keunhong.com/">Keunhong Park</a> for developing and open-sourcing this template.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
