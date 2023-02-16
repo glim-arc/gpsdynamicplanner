@@ -91,6 +91,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     :param stationary:      True if environment contains only stationary obstacles
     :return: environment
     """
+    logging.info("create random environment")
     objects = create_street(args)
     if object_str_list is not None:
         for obj_str in object_str_list:
@@ -120,11 +121,11 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
         #     objects.append(obj)
 
         #obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread]) cc
-        wide = 1
-        height = 5
+        wide = 2
+        height = 8
         obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 10])
-        obs2 = np.array([-3, -3 + wide, 0, 0 + height, 1, 10])
-        obs3 = np.array([3, 3 + wide, -12, -12 + height, 1, 10])
+        obs2 = np.array([-3, -3 + wide, -12, -12 + height, 1, 10])
+        obs3 = np.array([3, 3 + wide, 0, 0 + height, 1, 10])
         obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 10])
 
         obslist = [obs1, obs2, obs3, obs4]
@@ -132,6 +133,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
         for i in range(len(obslist)):
             obs = obslist[i]
             obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
+            objects.append(obj)
 
     environment = Environment(objects, args, name=name)
     if timestep > 0:
