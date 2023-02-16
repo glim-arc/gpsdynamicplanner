@@ -52,7 +52,7 @@ def create_mp_task(args, seed):
         env = create_environment(args, timestep=100, stationary=args.mp_stationary)
         logging.info("Loading Simulated Environment (seed %d)" % (seed))
         if seed < 20:
-            xref0 = torch.tensor([-3, -17, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
+            xref0 = torch.tensor([0, -25, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
             xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
         else:
             valid = False
@@ -127,8 +127,9 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
         obs2 = np.array([-3, -3 + wide, -12, -12 + height, 1, 10])
         obs3 = np.array([3, 3 + wide, 0, 0 + height, 1, 10])
         obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 10])
+        obs5 = np.array([0, 0 + wide, -20, -20 + wide, 1, 10])
 
-        obslist = [obs1, obs2, obs3, obs4]
+        obslist = [obs1, obs2, obs3, obs4,obs5]
 
         for i in range(len(obslist)):
             obs = obslist[i]
