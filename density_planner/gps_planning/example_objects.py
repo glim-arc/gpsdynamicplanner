@@ -119,7 +119,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
         #         obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
         #     objects.append(obj)
 
-        #obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread])
+        #obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread]) cc
         wide = 1
         height = 5
         obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 10])
