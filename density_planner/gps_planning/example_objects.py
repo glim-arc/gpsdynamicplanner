@@ -52,7 +52,7 @@ def create_mp_task(args, seed):
         env = create_environment(args, timestep=100, stationary=args.mp_stationary)
         logging.info("Loading Simulated Environment (seed %d)" % (seed))
         if seed < 20:
-            xref0 = torch.tensor([0, -28, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
+            xref0 = torch.tensor([-3, -17, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
             xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
         else:
             valid = False
