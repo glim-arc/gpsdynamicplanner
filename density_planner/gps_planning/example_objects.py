@@ -100,24 +100,38 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
             else:
                 objects.append(obj)
     else:
-        num_static = np.random.randint(4, 8)
-        num_dynamics = np.random.randint(6, 10)
-        for i in range(num_static + num_dynamics):
-            wide = np.random.randint(5, 40) / 10
-            height = np.random.randint(5, 40) / 10
-            xstart = np.random.randint(-7, 7)
-            ystart = np.random.randint(-23, 5)
-            certainty = np.random.randint(3, 10) / 10
-            spread = np.random.randint(1, 30)
-            obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread])
-            if not stationary and i >= num_static:
-                vx = np.random.randint(-2, 2)
-                vy = np.random.randint(-2, 2)
-                obj = DynamicObstacle(args, name="staticObs%d" % (i - num_static), coord=obs, velocity_x=vx,
-                                      velocity_y=vy)
-            else:
-                obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
-            objects.append(obj)
+        num_static = 4 #np.random.randint(4, 8)
+        num_dynamics = 0 #np.random.randint(6, 10)
+        # for i in range(num_static + num_dynamics):
+        #     wide = np.random.randint(5, 40) / 10
+        #     height = np.random.randint(5, 40) / 10
+        #     xstart = np.random.randint(-7, 7)
+        #     ystart = np.random.randint(-23, 5)
+        #     certainty = np.random.randint(3, 10) / 10
+        #     spread = np.random.randint(1, 30)
+        #     obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread])
+        #     if not stationary and i >= num_static:
+        #         vx = np.random.randint(-2, 2)
+        #         vy = np.random.randint(-2, 2)
+        #         obj = DynamicObstacle(args, name="staticObs%d" % (i - num_static), coord=obs, velocity_x=vx,
+        #                               velocity_y=vy)
+        #     else:
+        #         obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
+        #     objects.append(obj)
+
+        #obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread])
+        wide = 1
+        height = 5
+        obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 10])
+        obs2 = np.array([-3, -3 + wide, 0, 0 + height, 1, 10])
+        obs3 = np.array([3, 3 + wide, -12, -12 + height, 1, 10])
+        obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 10])
+
+        obslist = [obs1, obs2, obs3, obs4]
+
+        for i in range(len(obslist)):
+            obs = obslist[i]
+            obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
 
     environment = Environment(objects, args, name=name)
     if timestep > 0:
