@@ -126,9 +126,9 @@ def parse_args():
 
     # optimization with gradient descent
     parser.add_argument('--mp_optimizer', type=str, default="Adam")
-    parser.add_argument('--mp_epochs', type=int, default=20) #100
-    parser.add_argument('--mp_epochs_density', type=int, default=50) #100
-    parser.add_argument('--mp_numtraj', type=float, default=20) #30
+    parser.add_argument('--mp_epochs', type=int, default=100) #100
+    parser.add_argument('--mp_epochs_density', type=int, default=100) #100
+    parser.add_argument('--mp_numtraj', type=float, default=30) #30
     parser.add_argument('--mp_lr', type=float, default=1e-2)
     parser.add_argument('--mp_lr_step', type=int, default=0)
     parser.add_argument('--max_gradient', type=float, default=0.02)
