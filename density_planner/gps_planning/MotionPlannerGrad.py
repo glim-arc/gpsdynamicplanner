@@ -185,7 +185,7 @@ class MotionPlannerGrad(MotionPlanner):
         if plot:
             if folder is None:
                 folder = self.path_log
-            self.ego.visualize_xref(xref_traj, name=name, save=True, show=False, folder=folder)
+            # self.ego.visualize_xref(xref_traj, name=name, save=True, show=False, folder=folder)
         return uref_traj, xref_traj
 
     def get_cost_initialize(self, uref_traj, x_traj):
