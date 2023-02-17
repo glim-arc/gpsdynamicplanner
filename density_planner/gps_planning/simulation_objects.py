@@ -9,6 +9,7 @@ from matplotlib import cm
 from matplotlib.colors import ListedColormap
 from systems.sytem_CAR import Car
 import matplotlib.pyplot as plt
+from scipy.ndimage import gaussian_filter
 
 
 class Environment:
@@ -28,9 +29,10 @@ class Environment:
         self.grid_gradientY = None
         self.grid = None
         initialgrid = self.grid.numpy()[:,:,0]
+        initialgrid = gaussian_filter(initialgrid,sigma=1) + initialgrid
         img = np.zeros(np.shape(initialgrid))
         img = np.stack([np.zeros(np.shape(initialgrid)), np.zeros(np.shape(initialgrid)), initialgrid], 2)
-        # plt.imshow(initialgrid)
+        plt.imshow(initialgrid)
 
 
 
