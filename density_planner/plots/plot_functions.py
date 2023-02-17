@@ -13,7 +13,7 @@ matplotlib.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 plt.rcParams['text.usetex'] = True
 plt.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 plt.rcParams['text.latex.preamble'] = r'\usepackage{{mathrsfs}}'
-#plt.rc('font',**{'family':'serif','serif':['Palatino']})
+# plt.rc('font',**{'family':'serif','serif':['Palatino']})
 plt.rcParams['legend.fontsize'] = 18
 plt.rc('axes', titlesize=18)
 plt.rc('axes', labelsize=18)
@@ -21,19 +21,19 @@ plt.rc('xtick', labelsize=14)
 plt.rc('ytick', labelsize=14)
 
 ###colors
-MITRed = np.array([163/256, 31/256, 52/256])
-TUMBlue = np.array([0, 101/256, 189/256])
-TUMBlue_med = np.array([153/256, 193/256, 229/256])
-TUMBlue_light = np.array([230/256, 240/256, 249/256])
-TUMGray = np.array([128/256, 128/256, 128/256])
-TUMGray_light = np.array([204/256, 204/256, 198/256])
-TUMOrange_acc = np.array([227/256, 114/256, 34/256])
-TUMGreen_acc = np.array([162/256, 113/256, 0/256])
-
+MITRed = np.array([163 / 256, 31 / 256, 52 / 256])
+TUMBlue = np.array([0, 101 / 256, 189 / 256])
+TUMBlue_med = np.array([153 / 256, 193 / 256, 229 / 256])
+TUMBlue_light = np.array([230 / 256, 240 / 256, 249 / 256])
+TUMGray = np.array([128 / 256, 128 / 256, 128 / 256])
+TUMGray_light = np.array([204 / 256, 204 / 256, 198 / 256])
+TUMOrange_acc = np.array([227 / 256, 114 / 256, 34 / 256])
+TUMGreen_acc = np.array([162 / 256, 113 / 256, 0 / 256])
 
 """
 functions to generate plots and figures
 """
+
 
 def plot_density_heatmap(name, args, xe_dict, rho_dict, system=None, save=True, show=True, filename=None,
                          include_date=False, folder=None, log_density=False, title=None):
@@ -77,12 +77,12 @@ def plot_density_heatmap(name, args, xe_dict, rho_dict, system=None, save=True, 
             im = axis.imshow(density_mean[key].T, extent=extent[0] + extent[1], origin='lower', cmap=cmap)
         else:
             im = axis.imshow(density_mean[key].T, extent=extent[0] + extent[1], origin='lower', cmap=cmap,
-                         norm=pltcol.LogNorm(vmin=min_rho, vmax=max_rho))#vmin=plot_limits[0], vmax=plot_limits[1])
+                             norm=pltcol.LogNorm(vmin=min_rho,
+                                                 vmax=max_rho))  # vmin=plot_limits[0], vmax=plot_limits[1])
         axis.set_title("\\textbf{%s Prediction}" % (key))
         axis.set_xlabel("$p_x-p_{x*}$ [m]")
         if not next_to or (next_to and i == 0):
             axis.set_ylabel("$p_y-p_{y*}$ [m]")
-
 
     axis = ax[num_plots]
     fig.colorbar(im, ax=axis, orientation='vertical', fraction=1, pad=0.2, format="%.0e")
@@ -120,17 +120,17 @@ def plot_scatter(x_nn, x_le, rho_nn, rho_le, name, args, weighted=False,
     colors = np.arange(0, step * x_nn.shape[0], step)
     num_plots = 1
 
-    for j in np.arange(0, num_plots*2, 2):
+    for j in np.arange(0, num_plots * 2, 2):
         for i in range(x_nn.shape[0]):
-            plt.plot([x_nn[i, j], x_le[i, j]],[x_nn[i, j+1], x_le[i, j+1]], color='gainsboro', zorder=-1)
+            plt.plot([x_nn[i, j], x_le[i, j]], [x_nn[i, j + 1], x_le[i, j + 1]], color='gainsboro', zorder=-1)
 
         if weighted:
-            sizes = 5 * rho_nn ** (1/6)
+            sizes = 5 * rho_nn ** (1 / 6)
         else:
             sizes = 15 * torch.ones_like(rho_nn)
-        plt.scatter(x_nn[:, j], x_nn[:, j+1], marker='o', c=colors, sizes=sizes, cmap='gist_ncar',
+        plt.scatter(x_nn[:, j], x_nn[:, j + 1], marker='o', c=colors, sizes=sizes, cmap='gist_ncar',
                     label='NN estimate', zorder=1)
-        plt.scatter(x_le[:, j], x_le[:, j+1], marker='x', c=colors, sizes=sizes, cmap='gist_ncar',
+        plt.scatter(x_le[:, j], x_le[:, j + 1], marker='x', c=colors, sizes=sizes, cmap='gist_ncar',
                     label='LE estimate', zorder=1)  # ,
         plt.axis('scaled')
         plt.legend()
@@ -149,16 +149,20 @@ def plot_scatter(x_nn, x_le, rho_nn, rho_le, name, args, weighted=False,
         ticks_y_grid, ticks_y = plt.yticks()
         plt.xticks(ticks_y_grid[1:-1], ticks_y_grid[1:-1])
         error = x_nn - x_le
-        error_dim = torch.sqrt((x_nn[:, j] - x_le[:, j]) ** 2 + (x_nn[:, j+1] - x_le[:, j+1]) ** 2)
-        plt.title("State Predictions at " + name + "\n max state error: %.3f, mean state error: %.4f, \n max eucl-distance: %.3f, mean eucl-distance: %.4f" %
-                  (torch.max(torch.abs(error)), torch.mean(torch.abs(error)), torch.max(torch.abs(error_dim)), torch.mean(torch.abs(error_dim))))
+        error_dim = torch.sqrt((x_nn[:, j] - x_le[:, j]) ** 2 + (x_nn[:, j + 1] - x_le[:, j + 1]) ** 2)
+        plt.title(
+            "State Predictions at " + name + "\n max state error: %.3f, mean state error: %.4f, \n max eucl-distance: %.3f, mean eucl-distance: %.4f" %
+            (torch.max(torch.abs(error)), torch.mean(torch.abs(error)), torch.max(torch.abs(error_dim)),
+             torch.mean(torch.abs(error_dim))))
         plt.tight_layout()
         if save:
             if filename is None:
                 if include_date:
-                    filename_new = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_Scatter_" + 'dims%d-%d_' % (j, j+1) + 'randomSeed%d_' % args.random_seed + name + ".jpg"
+                    filename_new = datetime.now().strftime("%Y-%m-%d-%H-%M-%S") + "_Scatter_" + 'dims%d-%d_' % (
+                    j, j + 1) + 'randomSeed%d_' % args.random_seed + name + ".jpg"
                 else:
-                    filename_new = "Scatter_" + 'dims%d-%d_' % (j, j+1) + 'randomSeed%d_' % args.random_seed + name + ".jpg"
+                    filename_new = "Scatter_" + 'dims%d-%d_' % (
+                    j, j + 1) + 'randomSeed%d_' % args.random_seed + name + ".jpg"
                 plt.savefig(args.path_plot_scatter + filename_new)
             else:
                 plt.savefig(args.path_plot_scatter + filename)
@@ -173,7 +177,7 @@ def plot_losscurves(result, name, args, type="Loss",
     function for plotting the loss of the density NN
     """
 
-    colors = [MITRed, TUMBlue, TUMGray] #['g', 'r', 'c', 'b', 'm', 'y']
+    colors = [MITRed, TUMBlue, TUMGray]  # ['g', 'r', 'c', 'b', 'm', 'y']
     plt.figure(figsize=(8, 4.5))
     if type == "Loss":
         if "train_loss" in result:
@@ -212,7 +216,7 @@ def plot_losscurves(result, name, args, type="Loss",
                     if val[0].ndim > 0:
                         for j in range(val[0].shape[0]):
                             plt.plot([val[k][j] for k in range(len(val))],
-                                     color=colors[i], linestyle='-', label="train " + key +"[%d]" % j)
+                                     color=colors[i], linestyle='-', label="train " + key + "[%d]" % j)
                             i += 1
                     else:
                         plt.plot(val, color=colors[i], linestyle='-', label="train " + key)
@@ -224,7 +228,7 @@ def plot_losscurves(result, name, args, type="Loss",
                     if val[0].ndim > 0:
                         for j in range(val[0].shape[0]):
                             plt.plot([val[k][j] for k in range(len(val))],
-                                     color=colors[i], linestyle=':', label="test " + key +"[%d]" % j)
+                                     color=colors[i], linestyle=':', label="test " + key + "[%d]" % j)
                             i += 1
                     else:
                         plt.plot(val, color=colors[i], linestyle=':', label="test " + key)
@@ -248,14 +252,15 @@ def plot_losscurves(result, name, args, type="Loss",
     plt.clf()
 
 
-def plot_cost(costs_dict, args, plot_log=True, name="", save=True, show=True, filename=None, include_date=True, folder=None):
+def plot_cost(costs_dict, args, plot_log=True, name="", save=True, show=True, filename=None, include_date=True,
+              folder=None):
     """
     function for plotting the cost curves of the gradient-based trajectory optimization method
     """
     num_plots = len(costs_dict["cost_sum"][0])
     for i in range(num_plots):
         plt.figure(figsize=(8, 5))
-        #plt.title("Cost Curve %d for Motion Planning \n %s" % (i, name))
+        # plt.title("Cost Curve %d for Motion Planning \n %s" % (i, name))
         for key in ["cost_goal", "cost_uref", "cost_bounds", "cost_coll", "cost_sum"]:
             val = costs_dict[key]
             if (val[0]).dim() == 0:
@@ -301,6 +306,7 @@ def plot_cost(costs_dict, args, plot_log=True, name="", save=True, show=True, fi
             plt.show()
         plt.clf()
 
+
 def plot_ref(xref_traj, uref_traj, name, args, system, t=None, x_traj=None,
              save=True, show=True, filename=None, include_date=False, folder=None):
     """
@@ -310,29 +316,30 @@ def plot_ref(xref_traj, uref_traj, name, args, system, t=None, x_traj=None,
     if t is None:
         t = args.dt_sim * torch.arange(0, xref_traj.shape[2])
     fig, ax = plt.subplots(2, 1, gridspec_kw={'height_ratios': [4, 1]})
-    fig.set_figheight(8) # for 5 plots: 13
+    fig.set_figheight(8)  # for 5 plots: 13
     matplotlib.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
 
     if x_traj is not None:
-        #x_traj = system.project_angle(x_traj)
+        # x_traj = system.project_angle(x_traj)
         for i in range(x_traj.shape[0]):
             if i == 1:
                 ax[0].plot(x_traj[i, 0, :], x_traj[i, 1, :], color=TUMGray_light,
                            label='Sample Trajectories $\{\mathbf{x}^{(i)}(\cdot)\}_{i=1}^{50}$')
             else:
                 ax[0].plot(x_traj[i, 0, :], x_traj[i, 1, :], color=TUMGray_light)
-            tracking_error = torch.sqrt((x_traj[i, 0, :]-xref_traj[0,0,:]) ** 2 + (x_traj[i, 1, :]-xref_traj[0,1,:]) ** 2)
+            tracking_error = torch.sqrt(
+                (x_traj[i, 0, :] - xref_traj[0, 0, :]) ** 2 + (x_traj[i, 1, :] - xref_traj[0, 1, :]) ** 2)
             ax[1].plot(t, tracking_error, color=TUMGray_light)
 
-    ax[0].plot(xref_traj[0,0,:], xref_traj[0,1,:],  color=TUMBlue,
+    ax[0].plot(xref_traj[0, 0, :], xref_traj[0, 1, :], color=TUMBlue,
                label='Reference Trajectory $\mathbf{x}_*(\cdot)$')
     ax[0].grid()
     ax[0].set_xlabel("$p_x$ [m]")
     ax[0].set_ylabel("$p_y$ [m]")
     ax[0].set_xlim(system.X_MIN[0, 0, 0] - 1, system.X_MAX[0, 0, 0] + 1)
     ax[0].set_ylim(system.X_MIN[0, 1, 0] - 1, system.X_MAX[0, 1, 0] + 1)
-    ax[0].set_xticks(np.arange(system.X_MIN[0, 0, 0], system.X_MAX[0, 0, 0]+1, 5))
-    ax[0].set_yticks(np.arange(system.X_MIN[0, 1, 0], system.X_MAX[0, 1, 0]+1, 5))
+    ax[0].set_xticks(np.arange(system.X_MIN[0, 0, 0], system.X_MAX[0, 0, 0] + 1, 5))
+    ax[0].set_yticks(np.arange(system.X_MIN[0, 1, 0], system.X_MAX[0, 1, 0] + 1, 5))
     ax[0].legend()
 
     ax[1].plot(t, torch.zeros_like(t), color=TUMBlue)
@@ -369,7 +376,7 @@ def plot_grid(object, args, timestep=None, cmap='binary', name=None,
         if object.dim() == 3:
             if timestep is None:
                 grid = object[:, :, -1]
-                str_timestep = f"\n at timestep={object.shape[2]-1}"
+                str_timestep = f"\n at timestep={object.shape[2] - 1}"
             else:
                 grid = object[:, :, timestep]
                 str_timestep = f"\n at timestep={timestep}"
@@ -391,8 +398,10 @@ def plot_grid(object, args, timestep=None, cmap='binary', name=None,
     plt.pcolormesh(grid.T, cmap=cmap, norm=None)
     plt.axis('scaled')
 
-    ticks_x = np.concatenate((np.arange(0, args.environment_size[1]+1, 10), np.arange(-10, args.environment_size[0]-1, -10)), 0)
-    ticks_y = np.concatenate((np.arange(0, args.environment_size[3]+1, 10), np.arange(-10, args.environment_size[2]-1, -10)), 0)
+    ticks_x = np.concatenate(
+        (np.arange(0, args.environment_size[1] + 1, 10), np.arange(-10, args.environment_size[0] - 1, -10)), 0)
+    ticks_y = np.concatenate(
+        (np.arange(0, args.environment_size[3] + 1, 10), np.arange(-10, args.environment_size[2] - 1, -10)), 0)
     ticks_x_grid, ticks_y_grid = pos2gridpos(args, ticks_x, ticks_y)
     plt.xticks(ticks_x_grid, ticks_x)
     plt.yticks(ticks_y_grid, ticks_y)
@@ -435,8 +444,10 @@ def plot_motion(i, cmap, x_traj, rho_traj, xref_traj, args, grid_env_sc):
     plt.pcolormesh(grid_all.T, cmap=cmap, norm=None)
     plt.axis('scaled')
 
-    ticks_x = np.concatenate((np.arange(0, args.environment_size[1]+1, 10), np.arange(-10, args.environment_size[0]-1, -10)), 0)
-    ticks_y = np.concatenate((np.arange(0, args.environment_size[3]+1, 10), np.arange(-10, args.environment_size[2]-1, -10)), 0)
+    ticks_x = np.concatenate(
+        (np.arange(0, args.environment_size[1] + 1, 10), np.arange(-10, args.environment_size[0] - 1, -10)), 0)
+    ticks_y = np.concatenate(
+        (np.arange(0, args.environment_size[3] + 1, 10), np.arange(-10, args.environment_size[2] - 1, -10)), 0)
     ticks_x_grid, ticks_y_grid = pos2gridpos(args, ticks_x, ticks_y)
     plt.xticks(ticks_x_grid, ticks_x)
     plt.yticks(ticks_y_grid, ticks_y)
@@ -444,7 +455,9 @@ def plot_motion(i, cmap, x_traj, rho_traj, xref_traj, args, grid_env_sc):
     plt.title("Predicted States at Time %.1f s" % (i / 10.))
     plt.tight_layout()
 
-def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None, animate=False, include_density=False, name=None):
+
+def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None, animate=False, include_density=False,
+              name=None):
     """
     function for plotting the reference trajectories planned by different motion planners in the occupation grid
     """
@@ -456,7 +469,7 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
                                  convert_color(TUMBlue_light),
                                  convert_color(TUMGray_light),
                                  convert_color(TUMBlue_med)))
-    
+
     if mp_methods[0] == "sys":
         colorarray = np.concatenate((convert_color(TUMGray),
                                      convert_color(TUMBlue),
@@ -497,9 +510,9 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
             continue
         x_traj = np.array(mp_results[method]["x_traj"][traj_idx].detach())
         x0 = ego_dict["start"]
-        idx_old = np.linspace(0, x_traj.shape[2]-1, x_traj.shape[2])
-        idx_new = np.linspace(0, x_traj.shape[2]-1, (x_traj.shape[2] -1) * 10 + 1)
-        x_traj_long = np.zeros((x_traj.shape[0], x_traj.shape[1], (x_traj.shape[2] -1) * 10 + 1))
+        idx_old = np.linspace(0, x_traj.shape[2] - 1, x_traj.shape[2])
+        idx_new = np.linspace(0, x_traj.shape[2] - 1, (x_traj.shape[2] - 1) * 10 + 1)
+        x_traj_long = np.zeros((x_traj.shape[0], x_traj.shape[1], (x_traj.shape[2] - 1) * 10 + 1))
         for j in range(x_traj.shape[1]):
             for traj_i in range(x_traj.shape[0]):
                 x_traj_long[traj_i, j, :] = np.interp(idx_new, idx_old, x_traj[traj_i, j, :])
@@ -524,13 +537,13 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
         elif name is not None:
             plt.figure(figsize=(x_wide, y_wide + 1.5), dpi=100)
         elif not legend:
-            plt.figure(figsize=(x_wide+1, y_wide), dpi=100)
+            plt.figure(figsize=(x_wide + 1, y_wide), dpi=100)
         else:
-            plt.figure(figsize=(1.85 * x_wide, y_wide), dpi=100) #plt.figure(figsize=(x_wide, y_wide + 2.5), dpi=100)
+            plt.figure(figsize=(1.85 * x_wide, y_wide), dpi=100)  # plt.figure(figsize=(x_wide, y_wide + 2.5), dpi=100)
 
         for i, x_traj in enumerate(x_traj_list):
             if mp_methods[i] == "grad" and "search" in mp_methods:
-                label = "Gradient-based \n Method" #"Density planner"
+                label = "Gradient-based \n Method"  # "Density planner"
             elif mp_methods[i] == "ref":
                 label = "Reference trajectory"
             elif mp_methods[i] == "sys":
@@ -552,31 +565,32 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
                 label = "MPC with \n $r_\\textrm{tube}=1m$"
             else:
                 label = mp_methods[i]
-            
+
             if i >= len(colorarray):
                 i = 0
 
             plt.plot(0, 0, "-", color=colorarray[i, :], label=label)
-            
+
             if x_traj is None:
                 continue
             for num_traj in range(x_traj.shape[0]):
                 grid_traj = traj2grid(x_traj[[num_traj], :, :t_idx * 10 + 1], args)
                 idx = grid_traj != 0
                 grid_idx = grid_all[idx]
-                grid_idx[:, :] = torch.from_numpy(colorarray[[i-1], :]) #.unsqueeze(0)
+                grid_idx[:, :] = torch.from_numpy(colorarray[[i - 1], :])  # .unsqueeze(0)
                 grid_all[idx] = grid_idx
             if include_density:
                 rho_traj = rho_traj_list[i]
                 x_trajs = x_trajs_list[i]
                 gridpos_x, gridpos_y = pos2gridpos(args, pos_x=x_trajs[:, 0, t_idx],
-                                           pos_y=x_trajs[:, 1, t_idx])
-                plt.scatter(gridpos_x[:], gridpos_y[:], c=colorarray[[i-1], :], marker='.', s=500 * rho_traj[:, 0, t_idx])
+                                                   pos_y=x_trajs[:, 1, t_idx])
+                plt.scatter(gridpos_x[:], gridpos_y[:], c=colorarray[[i - 1], :], marker='.',
+                            s=500 * rho_traj[:, 0, t_idx])
             if x_traj is None or x_traj.shape[2] < t_idx * 10:
                 continue
             gridpos_x, gridpos_y = pos2gridpos(args, pos_x=[x_traj[0, 0, t_idx * 10]],
                                                pos_y=[x_traj[0, 1, t_idx * 10]])
-            
+
             plt.scatter(gridpos_x[0], gridpos_y[0], c="red", marker='o', s=10)
 
         plt.imshow(torch.transpose(grid_all, 0, 1), origin="lower")
@@ -588,7 +602,7 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
             col_start2 = col_start.copy()
             col_start2[0, 3] = 0.2
             plt.scatter(gridpos_x[0], gridpos_y[0], c=col_start2, marker='s', s=800,
-                            label="Initial density distribution")
+                        label="Initial density distribution")
         else:
             plt.scatter(gridpos_x[0], gridpos_y[0], c=col_start, marker='o', s=80, label="Start")
         plt.scatter(gridpos_x[1], gridpos_y[1], c=col_start, marker='x', s=100, label="Goal $\mathbf{x}_{goal}$")
@@ -610,15 +624,17 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
                 plt.title("Iteration %d" % name, fontsize=24)
         else:
             plt.title("$t_k=%.2fs$" % (t_idx / 10.), fontsize=24)
-        ticks_x = np.concatenate((np.arange(0, args.environment_size[1]+1, 10), np.arange(-10, args.environment_size[0]-1, -10)), 0)
-        ticks_y = np.concatenate((np.arange(0, args.environment_size[3]+1, 10), np.arange(-10, args.environment_size[2]-1, -10)), 0)
+        ticks_x = np.concatenate(
+            (np.arange(0, args.environment_size[1] + 1, 10), np.arange(-10, args.environment_size[0] - 1, -10)), 0)
+        ticks_y = np.concatenate(
+            (np.arange(0, args.environment_size[3] + 1, 10), np.arange(-10, args.environment_size[2] - 1, -10)), 0)
         ticks_x_grid, ticks_y_grid = pos2gridpos(args, ticks_x, ticks_y)
         plt.xticks(ticks_x_grid, ticks_x)
         plt.yticks(ticks_y_grid, ticks_y)
         plt.xlabel("$p_x$ [m]")
         plt.ylabel("$p_y$ [m]")
 
-        #plt.title(f"{name}" + str_timestep)
+        # plt.title(f"{name}" + str_timestep)
         plt.tight_layout()
         if folder is None:
             folder = args.path_plot_grid
@@ -633,4 +649,3 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
         filename += ".jpg"
         plt.savefig(folder + filename, dpi=100)
         plt.clf()
-

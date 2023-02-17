@@ -1,5 +1,5 @@
 import torch
-from gps_planning.utils import pos2gridpos, initialize_logging, gridpos2pos
+from motion_planning.utils import pos2gridpos, initialize_logging, gridpos2pos
 from abc import ABC, abstractmethod
 
 
@@ -37,7 +37,6 @@ class MotionPlanner(ABC):
     def get_traj(self, up, xe0=None, rho0=None, name="traj", compute_density=False, use_nn=True, plot=True, folder=None):
         """
         compute trajectories from up
-
         :param up: torch.Tensor
             parameters specifying the reference input trajectory
         :param name: string
@@ -50,7 +49,6 @@ class MotionPlanner(ABC):
             True if reference trajectory is plotted
         :param folder: string
             name of folder to save plot
-
         :return: uref_traj: torch.Tensor
             1 x 2 x N_sim_short -1
         :return: xref_traj: torch.Tensor
@@ -73,14 +71,12 @@ class MotionPlanner(ABC):
     def get_cost(self, uref_traj, x_traj, rho_traj, evaluate=False, get_max=False):
         """
         compute cost of a given trajectory
-
         :param uref_traj: torch.Tensor
             1 x 2 x N_sim -1
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
             1 x 1 x N_sim
-
         :return: cost: torch.Tensor
             overall cost for given trajectory
         :return: cost_dict: dictionary
@@ -108,10 +104,8 @@ class MotionPlanner(ABC):
     def get_cost_uref(self, uref_traj):
         """
         compute cost for reference input trajectory
-
         :param uref_traj: torch.Tensor
             1 x 2 x N_sim -1
-
         :return: cost: torch.Tensor
             control effort cost for given trajectory
         """
@@ -121,12 +115,10 @@ class MotionPlanner(ABC):
     def get_cost_goal(self, x_traj, rho_traj, evaluate=False, get_max=False):
         """
         compute cost for reaching the goal
-
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
             1 x 1 x N_sim
-
         :return: cost: torch.Tensor
             cost for distance to the goal in the last iteration
         :return: close: bool
@@ -149,12 +141,10 @@ class MotionPlanner(ABC):
     def get_cost_bounds(self, x_traj, rho_traj, evaluate=False, get_max=False):
         """
         compute the cost for traying in the valid state space
-
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
             1 x 1 x N_sim
-
         :return: cost: torch.Tensor
             cost for staying in the admissible state space
         :return: in_bounds: bool
@@ -192,12 +182,10 @@ class MotionPlanner(ABC):
     def get_cost_coll(self, x_traj, rho_traj, get_max=False):
         """
         compute cost for high collision probabilities
-
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
             1 x 1 x N_sim
-
         :return: cost: torch.Tensor
             cost for collisions
         """
@@ -226,10 +214,8 @@ class MotionPlanner(ABC):
     def remove_cost_factor(self, cost_dict):
         """
         remove the weighting factors from the entries of the cost dictionary
-
         :param cost_dict: dictionary
             contains the weighted cost tensors
-
         :return: cost_dict: dictionary
             contains the unweighted cost tensors
         """
@@ -242,4 +228,3 @@ class MotionPlanner(ABC):
         for key in cost_dict.keys():
             cost_dict["cost_sum"] += cost_dict[key]
         return cost_dict
-

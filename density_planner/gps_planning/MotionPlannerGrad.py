@@ -12,6 +12,7 @@ class MotionPlannerGrad(MotionPlanner):
     """
     class to use proposed density planner for motion planning
     """
+
     def __init__(self, ego, path_log=None, name="grad"):
         super().__init__(ego, name=name, path_log=path_log)
         self.initial_traj = []
@@ -31,7 +32,6 @@ class MotionPlannerGrad(MotionPlanner):
 
         logging.debug("%s: Optimizing %d Random Trajectories without density" % (self.name, self.ego.args.mp_numtraj))
         t0 = time.time()
-        
 
         up_best, cost_min = self.find_initial_traj()
         t_init = time.time() - t0
@@ -41,7 +41,7 @@ class MotionPlannerGrad(MotionPlanner):
 
         logging.debug("%s: Improving input parameters with density prediction" % self.name)
         t0 = time.time()
-        
+
         up, cost = self.optimize_traj(up_best)
         t_opt = time.time() - t0
         logging.debug("%s: Optimization finished in %.2fs" % (self.name, t_opt))
@@ -49,9 +49,9 @@ class MotionPlannerGrad(MotionPlanner):
         t_plan = time.time() - tall
         logging.info("%s: Planning finished in %.2fs" % (self.name, t_plan))
         logging.info("%s: Final cost coll %.4f, goal %.4f, bounds %.4f, uref %.4f" % (self.name, cost["cost_coll"],
-                                                                                  cost["cost_goal"],
-                                                                                  cost["cost_bounds"],
-                                                                                  cost["cost_uref"]))
+                                                                                      cost["cost_goal"],
+                                                                                      cost["cost_bounds"],
+                                                                                      cost["cost_uref"]))
         logging.debug(up)
         cost = self.validate_ref(up)
         return up, cost, t_plan
@@ -62,7 +62,6 @@ class MotionPlannerGrad(MotionPlanner):
         """
         if self.plot:
             self.path_log_opt = make_path(self.path_log, self.name + "_initialTraj")
-            
 
         ### 1. generate random trajectory
         num_samples = self.ego.args.mp_numtraj
@@ -85,7 +84,6 @@ class MotionPlannerGrad(MotionPlanner):
     def find_best(self, criterium="cost_sum"):
         """
         return best trajectory from the initialization procedure
-
         :param criterium: criterium for comparison
         :return: up_best: best input parameters
         :return: cost_min: corresponding cost
@@ -102,7 +100,6 @@ class MotionPlannerGrad(MotionPlanner):
     def optimize_traj(self, up):
         """
         optimize best trajectory from initialization procedure with the density predictions
-
         :param up: input parameters
         :return: optimized input parameters and the corresponding cost
         """
@@ -145,10 +142,10 @@ class MotionPlannerGrad(MotionPlanner):
                     up -= torch.clamp(u_update, -self.ego.args.max_gradient, self.ego.args.max_gradient)
                     up.clamp(self.ego.system.UREF_MIN, self.ego.system.UREF_MAX)
                     up.grad.zero_()
-            
+
             if initializing:
                 uref_traj, xref_traj = self.get_traj_initialize(up, name=iter, plot=self.plot, folder=folder)
-                #x_traj = xref_traj[:, :4, :]
+                # x_traj = xref_traj[:, :4, :]
                 cost, cost_dict = self.get_cost_initialize(uref_traj, xref_traj)
             else:
                 uref_traj, _, x_traj, rho_traj = self.get_traj(up, name=iter, folder=folder,
@@ -165,7 +162,6 @@ class MotionPlannerGrad(MotionPlanner):
     def get_traj_initialize(self, up, name="traj", plot=True, folder=None):
         """
         compute reference trajectory from input parameters for initialization process
-
         :param up: torch.Tensor
             parameters specifying the reference input trajectory
         :param name: string
@@ -174,7 +170,6 @@ class MotionPlannerGrad(MotionPlanner):
             True if reference trajectory is plotted
         :param folder: string
             name of folder to save plot
-
         :return: uref_traj: torch.Tensor
             1 x 2 x N_sim_short -1
         :return: xref_traj: torch.Tensor
@@ -185,13 +180,12 @@ class MotionPlannerGrad(MotionPlanner):
         if plot:
             if folder is None:
                 folder = self.path_log
-            # self.ego.visualize_xref(xref_traj, name=name, save=True, show=False, folder=folder)
+            self.ego.visualize_xref(xref_traj, name=name, save=True, show=False, folder=folder)
         return uref_traj, xref_traj
 
     def get_cost_initialize(self, uref_traj, x_traj):
         """
         compute cost of a given trajectory
-
         :param uref_traj: torch.Tensor
             1 x 2 x N_sim -1
         :param xref_traj: torch.Tensor
@@ -200,7 +194,6 @@ class MotionPlannerGrad(MotionPlanner):
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
             1 x 1 x N_sim
-
         :return: cost: torch.Tensor
             overall cost for given trajectory
         :return: cost_dict: dictionary
@@ -247,16 +240,13 @@ class MotionPlannerGrad(MotionPlanner):
         }
         return cost, cost_dict
 
-
     def get_cost_goal_initialize(self, x_traj, rho_traj=None):
         """
         compute cost for reaching the goal in inilialization process
-
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
             1 x 1 x N_sim
-
         :return: cost: torch.Tensor
             cost for distance to the goal in the last iteration
         :return: close: bool
@@ -277,12 +267,10 @@ class MotionPlannerGrad(MotionPlanner):
     def get_cost_bounds_initialize(self, x_traj):
         """
         compute the cost for traying in the valid state space in inilialization process
-
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
             1 x 1 x N_sim
-
         :return: cost: torch.Tensor
             cost for staying in the admissible state space
         :return: in_bounds: bool
@@ -313,10 +301,8 @@ class MotionPlannerGrad(MotionPlanner):
     def get_cost_coll_initialize(self, x_traj):
         """
         compute cost for high collision probabilities in inilialization process
-
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
-
         :return: cost: torch.Tensor
             cost for collisions
         """
@@ -342,10 +328,8 @@ class MotionPlannerGrad(MotionPlanner):
     def optimizer_step(self, grad):
         """
         compute step of optimizer
-
         :param grad: torch.Tensor
             gradient of cost
-
         :return: step: torch.Tensor
             step for optimizing
         """
@@ -370,10 +354,8 @@ class MotionPlannerGrad(MotionPlanner):
     def validate_ref(self, up):
         """
         evaluate input parameters (plot and compute final cost), assume that reference trajectory starts at ego.xref0
-
         :param up: torch.Tensor
             parameters specifying the reference input trajectory
-
         :return: cost_dict: dictionary
             contains the unweighted cost tensors
         """
@@ -383,7 +365,7 @@ class MotionPlannerGrad(MotionPlanner):
         else:
             path_final = None
 
-        uref_traj, xref_traj, x_traj, rho_traj = self.get_traj(up, name=self.name+"_finalRef", compute_density=True,
+        uref_traj, xref_traj, x_traj, rho_traj = self.get_traj(up, name=self.name + "_finalRef", compute_density=True,
                                                                plot=self.plot_final, use_nn=False, folder=path_final)
 
         if self.plot_final:
@@ -394,21 +376,19 @@ class MotionPlannerGrad(MotionPlanner):
         cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj, evaluate=True)
         cost_dict = self.remove_cost_factor(cost_dict)
         logging.info("%s: True cost coll %.4f, goal %.4f, bounds %.4f, uref %.4f" % (self.name, cost_dict["cost_coll"],
-                                                                                 cost_dict["cost_goal"],
-                                                                                 cost_dict["cost_bounds"],
-                                                                                 cost_dict["cost_uref"]))
+                                                                                     cost_dict["cost_goal"],
+                                                                                     cost_dict["cost_bounds"],
+                                                                                     cost_dict["cost_uref"]))
         self.plot_final = False
         return cost_dict
 
     def validate_traj(self, up, xe0=None, return_time=False, biased=False):
         """
         evaluate input parameters (plot and compute final cost), assume that reference trajectory starts at ego.xref0
-
         :param up: torch.Tensor
             parameters specifying the reference input trajectory
         :param xe0: torch.Tensor
             batch_size x 4 x 1: tensor of initial deviation of reference trajectory
-
         :return: cost_dict: dictionary
             contains the unweighted cost tensors
         """
@@ -428,9 +408,9 @@ class MotionPlannerGrad(MotionPlanner):
 
         # TO-DO: get u_traj and compute "true" u_cost
         t0 = time.time()
-        uref_traj, xref_traj, x_traj, _ = self.get_traj(up, name=self.name+"_validTraj", xe0=xe0, rho0=rho0,
-                                                               compute_density=False, plot=self.plot_final, use_nn=False,
-                                                               folder=path_final)
+        uref_traj, xref_traj, x_traj, _ = self.get_traj(up, name=self.name + "_validTraj", xe0=xe0, rho0=rho0,
+                                                        compute_density=False, plot=self.plot_final, use_nn=False,
+                                                        folder=path_final)
         rho_traj = torch.ones(1, 1, x_traj.shape[2])
         self.x_traj = x_traj
         self.xref_traj = xref_traj
@@ -443,9 +423,9 @@ class MotionPlannerGrad(MotionPlanner):
         t_plan = time.time() - t0
         logging.debug("%s: Evaluation finished in %.2fs" % (self.name, t_plan))
         logging.info("%s: True cost coll %.4f, goal %.4f, bounds %.4f, uref %.4f" % (self.name, cost_dict["cost_coll"],
-                                                                                 cost_dict["cost_goal"],
-                                                                                 cost_dict["cost_bounds"],
-                                                                                 cost_dict["cost_uref"]))
+                                                                                     cost_dict["cost_goal"],
+                                                                                     cost_dict["cost_bounds"],
+                                                                                     cost_dict["cost_uref"]))
         if return_time:
             return cost_dict, t_plan
         return cost_dict
@@ -455,6 +435,7 @@ class MotionPlannerSearch(MotionPlanner):
     """
     density planner using a search-based optimization method
     """
+
     def __init__(self, ego, name="search", path_log=None):
         super().__init__(ego, name=name, path_log=path_log)
         self.incl_cost_goal = True
@@ -487,9 +468,9 @@ class MotionPlannerSearch(MotionPlanner):
         logging.info("%s: Planning finished in %.2fs" % (self.name, t_plan))
         if up is not None:
             logging.info("%s: Final cost coll %.4f, goal %.4f, bounds %.4f, uref %.4f" % (self.name, cost["cost_coll"],
-                                                                                      cost["cost_goal"],
-                                                                                      cost["cost_bounds"],
-                                                                                      cost["cost_uref"]))
+                                                                                          cost["cost_goal"],
+                                                                                          cost["cost_bounds"],
+                                                                                          cost["cost_uref"]))
             logging.debug(up)
             cost = self.validate_ref(up)
         else:
@@ -502,10 +483,8 @@ class MotionPlannerSearch(MotionPlanner):
     def validate_ref(self, up):
         """
         evaluate input parameters (plot and compute final cost), assume that reference trajectory starts at ego.xref0
-
         :param up: torch.Tensor
             parameters specifying the reference input trajectory
-
         :return: cost_dict: dictionary
             contains the unweighted cost tensors
         """
@@ -515,7 +494,7 @@ class MotionPlannerSearch(MotionPlanner):
         else:
             path_final = None
 
-        uref_traj, xref_traj, x_traj, rho_traj = self.get_traj(up, name=self.name+"_finalRef", compute_density=True,
+        uref_traj, xref_traj, x_traj, rho_traj = self.get_traj(up, name=self.name + "_finalRef", compute_density=True,
                                                                plot=self.plot_final, use_nn=False, folder=path_final)
 
         if self.plot_final:
@@ -526,15 +505,14 @@ class MotionPlannerSearch(MotionPlanner):
         cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj, evaluate=True)
         cost_dict = self.remove_cost_factor(cost_dict)
         logging.info("%s: True cost coll %.4f, goal %.4f, bounds %.4f, uref %.4f" % (self.name, cost_dict["cost_coll"],
-                                                                                 cost_dict["cost_goal"],
-                                                                                 cost_dict["cost_bounds"],
-                                                                                 cost_dict["cost_uref"]))
+                                                                                     cost_dict["cost_goal"],
+                                                                                     cost_dict["cost_bounds"],
+                                                                                     cost_dict["cost_uref"]))
         return cost_dict
 
     def plan_traj(self):
         """
         start the search
-
         :return: found input parameters and the corresponding cost
         """
         t0 = time.time()
@@ -575,29 +553,29 @@ class MotionPlannerSearch(MotionPlanner):
     def check_up(self, up, cost_goal_old=np.inf):
         """
         check if input parameters are valid
-
         :param up:              input parameters
         :param cost_goal_old:   old goal cost
         :return: True if valid
         """
         with torch.no_grad():
-            uref_traj, _, x_traj, rho_traj = self.get_traj(up, name="length%d" % up.shape[2], folder=self.path_log_opt, compute_density=True, plot=self.plot)
+            uref_traj, _, x_traj, rho_traj = self.get_traj(up, name="length%d" % up.shape[2], folder=self.path_log_opt,
+                                                           compute_density=True, plot=self.plot)
             cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj)
 
         time_left = (self.num_discr - up.shape[2]) * 10 / self.num_discr
         distance_goal = (cost_dict["cost_goal"] / (self.ego.args.weight_goal_far * self.weight_goal)).sqrt()
         if up.shape[2] < self.num_discr:
             heading_to_goal = np.arctan2(self.ego.xrefN[0, 1, 0] - x_traj[0, 1, -1],
-                                     self.ego.xrefN[0, 0, 0] - x_traj[0, 0, -1])
+                                         self.ego.xrefN[0, 0, 0] - x_traj[0, 0, -1])
             heading_diff = ((x_traj[0, 2, -1] - heading_to_goal + np.pi) % (2 * np.pi) - np.pi).abs()
         else:
-            if distance_goal > self.goal_thr: # too hard: cost_dict["cost_goal"] < self.ego.args.close2goal_thr:
+            if distance_goal > self.goal_thr:  # too hard: cost_dict["cost_goal"] < self.ego.args.close2goal_thr:
                 return False
             heading_diff = 0
             cost_goal_old = np.inf
             time_left = np.inf
 
-        if cost_dict["cost_bounds"] == 0 and cost_dict["cost_goal"] < cost_goal_old and heading_diff < np.pi/2\
+        if cost_dict["cost_bounds"] == 0 and cost_dict["cost_goal"] < cost_goal_old and heading_diff < np.pi / 2 \
                 and distance_goal / time_left < 9 and cost_dict["cost_coll"] / self.weight_coll < self.coll_thr:
             self.up_saved.append(up)
             self.cost_dict.append(cost_dict)
@@ -617,7 +595,6 @@ class MotionPlannerSearch(MotionPlanner):
     def extend_traj(self, up_old, cost_goal_old):
         """
         extend input parameters and check the resulting trajectories
-
         :param up_old:          unextended input parameters
         :param cost_goal_old:   old goal cost of the unextended input parameters
         :return: True if maximum length of input parameters is reached
@@ -636,6 +613,7 @@ class MotionPlannerSampling(MotionPlannerSearch):
     """
     density planner using a sampling-based optimization method
     """
+
     def __init__(self, ego, name="sampling", path_log=None):
         super().__init__(ego, name=name, path_log=path_log)
         self.cost_path = np.array([])
@@ -649,7 +627,6 @@ class MotionPlannerSampling(MotionPlannerSearch):
     def plan_traj(self):
         """
         start sampling procedure
-
         :return: final input parameters and the corresponding cost
         """
         if self.plot:
@@ -661,11 +638,11 @@ class MotionPlannerSampling(MotionPlannerSearch):
         t0 = time.time()
         while not success:
             decision_new = torch.randint(0, len(self.up_saved) + self.start_samples, (1,))
-            if decision_new >= len(self.up_saved): # up_add gets added as new parameter set
+            if decision_new >= len(self.up_saved):  # up_add gets added as new parameter set
                 up_add = 0.5 * torch.randn((1, 2, 1))
                 up_add = up_add.clamp(self.ego.system.UREF_MIN, self.ego.system.UREF_MAX)
                 self.check_up(up_add)
-            else: # up_add extends an already saved parameter set
+            else:  # up_add extends an already saved parameter set
                 thr = np.mean(self.cost_path)
                 weights = thr - self.cost_path + 1e-8
                 weights[self.cost_path > thr] = 0
@@ -681,8 +658,9 @@ class MotionPlannerSampling(MotionPlannerSearch):
                 break
 
         if success:
-            uref_traj, xref_traj, x_traj, rho_traj = self.get_traj(up_ext, name=self.name+"_finalRef", compute_density=True,
-                                                                       plot=False, use_nn=False, folder=None)
+            uref_traj, xref_traj, x_traj, rho_traj = self.get_traj(up_ext, name=self.name + "_finalRef",
+                                                                   compute_density=True,
+                                                                   plot=False, use_nn=False, folder=None)
             cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj)
             cost_min = self.remove_cost_factor(cost_dict)
             self.xref_traj = xref_traj
@@ -699,7 +677,6 @@ class MotionPlannerSampling(MotionPlannerSearch):
     def extend_traj(self, up_old, cost_goal_old):
         """
         extend input parameters and check the resulting trajectories
-
         :param up_old:          unextended input parameters
         :param cost_goal_old:   old goal cost of the unextended input parameters
         :return: True if maximum length of input parameters is reached
@@ -712,4 +689,3 @@ class MotionPlannerSampling(MotionPlannerSearch):
         if up.shape[2] == self.num_discr and added:
             return True, up
         return False, up
-
