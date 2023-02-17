@@ -114,7 +114,7 @@ class StaticObstacle:
         print(self.grid)
         self.bounds = [None for _ in range(timestep + 1)]
         self.occupancies = []
-        #self.add_occupancy(args, pos=coord[0:4], certainty=coord[4], spread=coord[5])
+        self.add_occupancy(args, pos=coord[0:4], certainty=coord[4], spread=coord[5])
 
     def add_occupancy(self, args, pos, certainty=1, spread=1, pdf_form='square'):
         """

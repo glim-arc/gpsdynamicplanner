@@ -65,8 +65,9 @@ def create_mp_task(args, seed):
         #     xref0 = torch.tensor([pos_0[0], pos_0[1], theta_0[0], v_0[0], 0]).reshape(1, -1, 1).type(torch.FloatTensor)
         #     xrefN = torch.tensor([pos_N[0], pos_N[1], 0, 0, 0]).reshape(1, -1, 1)
     if args.mp_plot_envgrid:
-        for t in [1, 20, 40, 60, 80, 100]:
-            plot_grid(env, args, timestep=t, save=False)
+        plot_grid(env, args, timestep=1, save=True)
+        # for t in [1, 20, 40, 60, 80, 100]:
+        #     plot_grid(env, args, timestep=t, save=False)
     logging.info("Start State: [%.1f, %.1f, %.1f, %.1f]" % (xref0[0, 0, 0], xref0[0, 1, 0], xref0[0, 2, 0], xref0[0, 3, 0]))
     logging.info("Goal Position: [%.1f, %.1f]" % (xrefN[0, 0, 0], xrefN[0, 1, 0]))
 
@@ -92,7 +93,8 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     :return: environment
     """
     logging.info("create random environment")
-    objects = create_street(args)
+    #objects = create_street(args)
+    objects = []
     if object_str_list is not None:
         for obj_str in object_str_list:
             obj = globals()["create_" + obj_str](args)
