@@ -28,14 +28,21 @@ class Environment:
         self.grid_gradientX = None
         self.grid_gradientY = None
         initialgrid = self.grid.numpy()[:,:,0]
-        #initialgrid = gaussian_filter(initialgrid,sigma=1) + initialgrid
+        ginitialgrid = gaussian_filter(initialgrid*1.5,sigma=15)
         img = np.zeros(np.shape(initialgrid))
-        img = np.stack([np.zeros(np.shape(initialgrid)), np.zeros(np.shape(initialgrid)), initialgrid], 2)
-        plt.imshow(img)
-        a=3
+        img = np.stack([np.zeros(np.shape(initialgrid)), initialgrid, ginitialgrid], 2)
 
+        plt.figure(1)
+        plt.imshow(initialgrid)
 
+        plt.figure(2)
+        img = np.stack([initialgrid, initialgrid, initialgrid], 2)
+        plt.imshow(ginitialgrid)
 
+        plt.figure(3)
+        newgrid = np.clip(initialgrid + ginitialgrid, 0, 1)
+        plt.imshow(newgrid)
+        plt.show()
 
     def update_grid(self):
         """
