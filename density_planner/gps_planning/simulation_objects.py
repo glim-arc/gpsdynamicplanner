@@ -26,12 +26,13 @@ class Environment:
         self.grid_enlarged = None
         self.grid_gradientX = None
         self.grid_gradientY = None
-        initialgrid = self.grid.numpy()
+        initialgrid = self.grid.numpy()[:,:,0]
         img = np.zeros(np.shape(initialgrid))
-        img = np.append(img, np.zeros(np.shape(initialgrid)))
-        img = np.append(img, np.zeros(np.shape(initialgrid)))
-        plt.imshow(img)
-        a=3
+        img = np.stack([np.zeros(np.shape(initialgrid)), np.zeros(np.shape(initialgrid)), initialgrid], 2)
+        # plt.imshow(initialgrid)
+
+
+
 
     def update_grid(self):
         """
