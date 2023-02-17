@@ -91,17 +91,17 @@ def parse_args():
     ### MOTION PLANNING
     # general motion planning options
     parser.add_argument('--mp_name', type=str, default="test")
-    parser.add_argument('--mp_setting', type=str, default="ablation")
+    parser.add_argument('--mp_setting', type=str, default="artificial")
     parser.add_argument('--mp_use_realEnv', type=bool, default=False)
     parser.add_argument('--mp_stationary', type=bool, default=False)
     parser.add_argument('--mp_num_envs', type=int, default=10)
     parser.add_argument('--mp_num_initial', type=int, default=1)
     parser.add_argument('--mp_recording', type=int, default=26)  # for real-world data: choose 8, 18/26 or 30
-    parser.add_argument('--mp_plot', type=bool, default=False)
+    parser.add_argument('--mp_plot', type=bool, default=True)
     parser.add_argument('--mp_plot_cost', type=bool, default=False)
-    parser.add_argument('--mp_plot_traj', type=bool, default=False)
+    parser.add_argument('--mp_plot_traj', type=bool, default=True)
     parser.add_argument('--mp_plot_envgrid', type=bool, default=False)
-    parser.add_argument('--mp_plot_final', type=bool, default=False)
+    parser.add_argument('--mp_plot_final', type=bool, default=True)
 
     # other options
     parser.add_argument('--weight_goal_far', type=float, default=10) #1 if no influence
@@ -126,7 +126,7 @@ def parse_args():
 
     # optimization with gradient descent
     parser.add_argument('--mp_optimizer', type=str, default="Adam")
-    parser.add_argument('--mp_epochs', type=int, default=100) #100
+    parser.add_argument('--mp_epochs', type=int, default=70) #100
     parser.add_argument('--mp_epochs_density', type=int, default=100) #100
     parser.add_argument('--mp_numtraj', type=float, default=30) #30
     parser.add_argument('--mp_lr', type=float, default=1e-2)

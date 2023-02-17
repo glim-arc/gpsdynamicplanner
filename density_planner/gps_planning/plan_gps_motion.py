@@ -16,12 +16,16 @@ if __name__ == '__main__':
     ### choose methods
     if args.mp_setting == "ablation":
         # ablation study of the optimization method (compare gradient-based, search-based and sampling-based method)
-        opt_methods = ["grad", "search", "sampl"]
+        opt_methods = ["grad", "search", "sample"]
         mp_methods = []
+    elif args.mp_setting == "gps":
+        # comparison of all motion planning approaches in the environments generated from artificial data
+        opt_methods = ["grad"]
+        mp_methods = ["grad", "grad_biased"]
     elif args.mp_setting == "artificial":
         # comparison of all motion planning approaches in the environments generated from artificial data
         opt_methods = ["grad"]
-        mp_methods = ["grad"]
+        mp_methods = ["grad", "grad_biased", "MPC", "MPC_biased", "tube2MPC", "tube2MPC_biased", "oracle"]
     elif args.mp_setting == "real":
         # comparison of the motion planning approaches in the environments generated from real-world data
         opt_methods = ["grad"]
@@ -114,7 +118,7 @@ if __name__ == '__main__':
                     biased = False
 
                 # run motion planner
-                if "grad"in mp_method:
+                if "grad" in mp_method:
                     cost, time = planner_grad.validate_traj(up_grad, xe0=xe0.clone(), return_time=True, biased=biased)
                     up = up_grad
                 else:
