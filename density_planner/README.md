@@ -5,7 +5,7 @@ Official Code for "Density Planner: Minimizing Collision Risk in Motion Planning
 ## GPS Planner
 1. GPS planner
 ```bash
-python -m gps_planning.plan_gps_motion --mp_setting gps --mp_plot True
+python -m gps_planning.plan_gps_motion --mp_setting gps
 ```
 
 parameter list

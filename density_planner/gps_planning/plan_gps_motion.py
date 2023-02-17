@@ -166,7 +166,7 @@ if __name__ == '__main__':
         if len(mp_methods) != 0:
             plot_traj(ego_dict, mp_results, mp_methods, args, folder=path_log)
         if len(opt_methods) != 0:
-            plot_traj(ego_dict, opt_results, opt_methods, args, traj_idx=k, folder=path_log, animate=True)
+            plot_traj(ego_dict, opt_results, opt_methods, args, traj_idx=None, folder=path_log, animate=True)
 
     if args.mp_save_results:
         if len(opt_methods) != 0:
