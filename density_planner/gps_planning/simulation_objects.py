@@ -32,7 +32,7 @@ class Environment:
         img = np.zeros(np.shape(initialgrid))
         img = np.stack([np.zeros(np.shape(initialgrid)), np.zeros(np.shape(initialgrid)), initialgrid], 2)
         plt.imshow(img)
-        a=3
+        plt.show()
 
 
 

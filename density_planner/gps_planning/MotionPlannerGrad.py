@@ -62,7 +62,6 @@ class MotionPlannerGrad(MotionPlanner):
         """
         if self.plot:
             self.path_log_opt = make_path(self.path_log, self.name + "_initialTraj")
-            
 
         ### 1. generate random trajectory
         num_samples = self.ego.args.mp_numtraj
