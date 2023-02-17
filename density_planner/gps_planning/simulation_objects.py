@@ -42,16 +42,15 @@ class Environment:
             self.add_grid(obj.grid)
 
         #implement gps by adding gaussian grid, update grid
-        updatedgrid = self.grid.numpy()[:, :, number_timesteps-1]
+        updatedgrid = np.array(self.grid.numpy()[:, :, number_timesteps-1], copy=True)
         gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=15)
         newgrid = np.clip(updatedgrid + gupdatedgrid, 0, 1)
-        shape = list(newgrid.shape) + [1]
-        self.grid = torch.from_numpy(newgrid.reshape(shape))
+        shape = list(newgrid.shape)
+        self.grid.numpy()[:, :, number_timesteps-1] = torch.from_numpy(newgrid.reshape(shape))
 
         # plot the original environment
         if number_timesteps == 1:
             fig = plt.figure(1)
-
             ax1 = fig.add_subplot(1, 3, 1)
             ax1.imshow(np.rot90(updatedgrid, 1))
             ax1.set_title('Obstacle')
@@ -143,7 +142,6 @@ class StaticObstacle:
         self.current_timestep = 0
         self.name = name
         self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], timestep + 1))
-        print(self.grid)
         self.bounds = [None for _ in range(timestep + 1)]
         self.occupancies = []
         self.add_occupancy(args, pos=coord[0:4], certainty=coord[4], spread=coord[5])
@@ -170,7 +168,7 @@ class StaticObstacle:
                 min_y = max(grid_pos_y[0] - i, 0)
                 max_y = min(grid_pos_y[1] + i + 1, self.grid.shape[1])
                 self.grid[min_x:max_x, min_y:max_y, self.current_timestep] += certainty / spread
-            limits = torch.tensor([grid_pos_x[0] - i, grid_pos_x[1] + i, grid_pos_y[0] - i, grid_pos_y[1] + i])
+                limits = torch.tensor([grid_pos_x[0] - i, grid_pos_x[1] + i, grid_pos_y[0] - i, grid_pos_y[1] + i])
             if self.bounds[self.current_timestep] is None:
                 self.bounds[self.current_timestep] = limits
             else:

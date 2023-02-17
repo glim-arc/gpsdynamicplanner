@@ -124,13 +124,13 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
         #     objects.append(obj)
 
         #obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread]) cc
-        wide = 2
+        wide = 3
         height = 8
-        obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 10])
-        obs2 = np.array([-3, -3 + wide, -12, -12 + height, 1, 10])
-        obs3 = np.array([3, 3 + wide, 0, 0 + height, 1, 10])
-        obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 10])
-        obs5 = np.array([0, 0 + wide, -20, -20 + height/2, 1, 10])
+        obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 1])
+        obs2 = np.array([-3, -3 + wide, -12, -12 + height, 1, 1])
+        obs3 = np.array([3, 3 + wide, 0, 0 + height, 1, 1])
+        obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 1])
+        obs5 = np.array([0, 0 + wide, -20, -20 + height/2, 1, 1])
 
         obslist = [obs1, obs2, obs3, obs4, obs5]
 
