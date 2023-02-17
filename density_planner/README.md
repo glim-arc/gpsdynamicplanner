@@ -2,6 +2,21 @@
 
 Official Code for "Density Planner: Minimizing Collision Risk in Motion Planning with Dynamic Obstacles using Density-based Reachability"
 
+## GPS Planner
+1. GPS planner
+```bash
+python -m gps_planning.plan_gps_motion --mp_setting artificial --mp_plot True
+```
+
+parameter list
+
+```
+parser.add_argument('--environment_size', type=list, default=[-12, 12, -30, 10])
+parser.add_argument('--mp_gaussians', type=int, default=5)
+parser.add_argument('--grid_wide', type=float, default=0.1)
+parser.add_argument('--mp_sample_size', type=int, default=500)
+```
+
 ## Installation
 1. clone the project
 ```bash

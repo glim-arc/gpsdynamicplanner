@@ -173,6 +173,7 @@ def get_nn_prediction(model, xe0, xref0, t, u_params, args):
 
     input_tensor, _ = get_input_tensors(u_params.flatten(), xref0, xe0, t, args)
     output_map, num_outputs = load_outputmap(dim_x=xe0.shape[1], args=args)
+    print(output_map)
 
     input = input_tensor.to(args.device)
     output = model(input)

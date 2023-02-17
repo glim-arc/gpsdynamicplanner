@@ -54,16 +54,16 @@ def create_mp_task(args, seed):
         if seed < 20:
             xref0 = torch.tensor([-5, -28, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
             xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
-        else:
-            valid = False
-            while not valid:
-                pos_0 = np.array([-5, 5]) + np.array([10, 5]) * np.random.rand(2)
-                pos_N = np.array([-5, -30]) + np.array([10, 10]) * np.random.rand(2)
-                theta_0 = -0.5 - 1.6 * np.random.rand(1)
-                v_0 = 1 + 8 * np.random.rand(1)
-                valid = check_start_goal(env.grid, pos_0, pos_N, theta_0, v_0, args)
-            xref0 = torch.tensor([pos_0[0], pos_0[1], theta_0[0], v_0[0], 0]).reshape(1, -1, 1).type(torch.FloatTensor)
-            xrefN = torch.tensor([pos_N[0], pos_N[1], 0, 0, 0]).reshape(1, -1, 1)
+        # else:
+        #     valid = False
+        #     while not valid:
+        #         pos_0 = np.array([-5, 5]) + np.array([10, 5]) * np.random.rand(2)
+        #         pos_N = np.array([-5, -30]) + np.array([10, 10]) * np.random.rand(2)
+        #         theta_0 = -0.5 - 1.6 * np.random.rand(1)
+        #         v_0 = 1 + 8 * np.random.rand(1)
+        #         valid = check_start_goal(env.grid, pos_0, pos_N, theta_0, v_0, args)
+        #     xref0 = torch.tensor([pos_0[0], pos_0[1], theta_0[0], v_0[0], 0]).reshape(1, -1, 1).type(torch.FloatTensor)
+        #     xrefN = torch.tensor([pos_N[0], pos_N[1], 0, 0, 0]).reshape(1, -1, 1)
     if args.mp_plot_envgrid:
         for t in [1, 20, 40, 60, 80, 100]:
             plot_grid(env, args, timestep=t, save=False)
@@ -72,11 +72,11 @@ def create_mp_task(args, seed):
 
     # create the ego vehicle
     ego = EgoVehicle(xref0, xrefN, env, args, video=args.mp_video)
-    if args.mp_use_realEnv:
-        ego.system.X_MIN_MP[0, 0, 0] = args.environment_size[0] + 0.1
-        ego.system.X_MIN_MP[0, 1, 0] = args.environment_size[2] + 0.1
-        ego.system.X_MAX_MP[0, 0, 0] = args.environment_size[1] - 0.1
-        ego.system.X_MAX_MP[0, 1, 0] = args.environment_size[3] - 0.1
+    # if args.mp_use_realEnv:
+    #     ego.system.X_MIN_MP[0, 0, 0] = args.environment_size[0] + 0.1
+    #     ego.system.X_MIN_MP[0, 1, 0] = args.environment_size[2] + 0.1
+    #     ego.system.X_MAX_MP[0, 0, 0] = args.environment_size[1] - 0.1
+    #     ego.system.X_MAX_MP[0, 1, 0] = args.environment_size[3] - 0.1
     return ego
 
 

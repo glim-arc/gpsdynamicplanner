@@ -56,7 +56,7 @@ def initialize_logging(args, name):
     shutil.copyfile('motion_planning/MotionPlanner.py', path_log + 'MotionPlanner.py')
     shutil.copyfile('motion_planning/MotionPlannerGrad.py', path_log + 'MotionPlannerGrad.py')
     shutil.copyfile('motion_planning/MotionPlannerNLP.py', path_log + 'MotionPlannerNLP.py')
-    shutil.copyfile('motion_planning/plan_gps_motion.py', path_log + 'plan_gps_motion.py')
+    shutil.copyfile('motion_planning/plan_motion.py', path_log + 'plan_motion.py')
     if args.mp_use_realEnv:
         shutil.copyfile('env/environment.py', path_log + 'environment.py')
 
