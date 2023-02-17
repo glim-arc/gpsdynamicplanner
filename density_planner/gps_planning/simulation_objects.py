@@ -65,7 +65,7 @@ class Environment:
                 obj.forward_occupancy(step_size=number_timesteps - obj.grid.shape[2])
             self.add_grid(obj.grid)
 
-        #implement gps by adding gaussian grid
+        #implement gps by adding gaussian grid, update grid
         updatedgrid = self.grid.numpy()[:, :, number_timesteps]
         gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=15)
         newgrid = np.clip(updatedgrid + gupdatedgrid, 0, 1)
