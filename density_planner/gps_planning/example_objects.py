@@ -96,14 +96,15 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     #objects = create_street(args)
     objects = []
     if object_str_list is not None:
-        for obj_str in object_str_list:
-            obj = globals()["create_" + obj_str](args)
-            if isinstance(obj, list):
-                objects += obj
-            else:
-                objects.append(obj)
+        objects = []
+        # for obj_str in object_str_list:
+        #     obj = globals()["create_" + obj_str](args)
+        #     if isinstance(obj, list):
+        #         objects += obj
+        #     else:
+        #         objects.append(obj)
     else:
-        num_static = 4 #np.random.randint(4, 8)
+        num_static = 5 #np.random.randint(4, 8)
         num_dynamics = 0 #np.random.randint(6, 10)
         # for i in range(num_static + num_dynamics):
         #     wide = np.random.randint(5, 40) / 10
