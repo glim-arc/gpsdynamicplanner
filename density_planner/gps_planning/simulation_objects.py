@@ -27,21 +27,30 @@ class Environment:
         self.grid_enlarged = None
         self.grid_gradientX = None
         self.grid_gradientY = None
+
         initialgrid = self.grid.numpy()[:,:,0]
         ginitialgrid = gaussian_filter(initialgrid*1.5,sigma=15)
-        img = np.zeros(np.shape(initialgrid))
-        img = np.stack([np.zeros(np.shape(initialgrid)), initialgrid, ginitialgrid], 2)
-
-        plt.figure(1)
-        plt.imshow(initialgrid)
-
-        plt.figure(2)
-        img = np.stack([initialgrid, initialgrid, initialgrid], 2)
-        plt.imshow(ginitialgrid)
-
-        plt.figure(3)
         newgrid = np.clip(initialgrid + ginitialgrid, 0, 1)
-        plt.imshow(newgrid)
+        self.grid = torch.from_numpy(newgrid)
+
+        #plot the original environment
+        fig = plt.figure(1)
+
+        ax1 = fig.add_subplot(1, 3, 1)
+        ax1.imshow(np.rot90(initialgrid, 1))
+        ax1.set_title('Obstacle')
+        ax1.axis("off")
+
+        ax2 = fig.add_subplot(1, 3, 2)
+        ax2.imshow(np.rot90(ginitialgrid, 1))
+        ax2.set_title('gps')
+        ax2.axis("off")
+
+        ax3 = fig.add_subplot(1, 3, 2)
+        ax3.imshow(np.rot90(newgrid, 1))
+        ax3.set_title('gps')
+        ax3.axis("off")
+
         plt.show()
 
     def update_grid(self):
@@ -54,6 +63,12 @@ class Environment:
             if obj.grid.shape[2] < number_timesteps:
                 obj.forward_occupancy(step_size=number_timesteps - obj.grid.shape[2])
             self.add_grid(obj.grid)
+
+        #implement gps by adding gaussian grid
+        updatedgrid = self.grid.numpy()[:, :, number_timesteps]
+        gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=15)
+        newgrid = np.clip(updatedgrid + gupdatedgrid, 0, 1)
+        self.grid = torch.from_numpy(newgrid)
 
     def add_grid(self, grid):
         """
