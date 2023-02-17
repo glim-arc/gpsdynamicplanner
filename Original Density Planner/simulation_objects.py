@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from gps_planning.utils import pos2gridpos, traj2grid, shift_array, \
+from motion_planning.utils import pos2gridpos, traj2grid, shift_array, \
     pred2grid, get_mesh_sample_points, sample_pdf, enlarge_grid, compute_gradient
 from density_training.utils import load_nn, get_nn_prediction
 from data_generation.utils import load_inputmap, load_outputmap
@@ -8,8 +8,6 @@ from plots.plot_functions import plot_ref, plot_grid, plot_traj
 from matplotlib import cm
 from matplotlib.colors import ListedColormap
 from systems.sytem_CAR import Car
-import matplotlib.pyplot as plt
-from scipy.ndimage import gaussian_filter
 
 
 class Environment:
@@ -28,8 +26,6 @@ class Environment:
         self.grid_gradientX = None
         self.grid_gradientY = None
 
-
-
     def update_grid(self):
         """
         forward object occupancies to the current timestep and add all grids together
@@ -40,33 +36,6 @@ class Environment:
             if obj.grid.shape[2] < number_timesteps:
                 obj.forward_occupancy(step_size=number_timesteps - obj.grid.shape[2])
             self.add_grid(obj.grid)
-
-        #implement gps by adding gaussian grid, update grid
-        updatedgrid = np.array(self.grid.numpy()[:, :, number_timesteps-1], copy=True)
-        gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=15)
-        newgrid = np.clip(updatedgrid + gupdatedgrid, 0, 1)
-        shape = list(newgrid.shape)
-        self.grid.numpy()[:, :, number_timesteps-1] = torch.from_numpy(newgrid.reshape(shape))
-
-        # plot the original environment
-        if number_timesteps == 1:
-            fig = plt.figure(1)
-            ax1 = fig.add_subplot(1, 3, 1)
-            ax1.imshow(np.rot90(updatedgrid, 1))
-            ax1.set_title('Obstacle')
-            ax1.axis("off")
-
-            ax2 = fig.add_subplot(1, 3, 2)
-            ax2.imshow(np.rot90(gupdatedgrid, 1))
-            ax2.set_title('GPS')
-            ax2.axis("off")
-
-            ax3 = fig.add_subplot(1, 3, 3)
-            ax3.imshow(np.rot90(newgrid, 1))
-            ax3.set_title('Combined')
-            ax3.axis("off")
-
-            plt.show()
 
     def add_grid(self, grid):
         """
@@ -168,7 +137,7 @@ class StaticObstacle:
                 min_y = max(grid_pos_y[0] - i, 0)
                 max_y = min(grid_pos_y[1] + i + 1, self.grid.shape[1])
                 self.grid[min_x:max_x, min_y:max_y, self.current_timestep] += certainty / spread
-                limits = torch.tensor([grid_pos_x[0] - i, grid_pos_x[1] + i, grid_pos_y[0] - i, grid_pos_y[1] + i])
+            limits = torch.tensor([grid_pos_x[0] - i, grid_pos_x[1] + i, grid_pos_y[0] - i, grid_pos_y[1] + i])
             if self.bounds[self.current_timestep] is None:
                 self.bounds[self.current_timestep] = limits
             else:
