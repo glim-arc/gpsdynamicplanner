@@ -337,7 +337,7 @@ class EgoVehicle:
             mp_results = {"ref": {"x_traj": [xref_traj]}}
 
         plot_traj(ego_dict, mp_results, mp_methods, self.args, folder=folder, traj_idx=0, animate=False,
-                  include_density=True, name=name)
+                  include_density=False, name=name)
 
     def animate_traj(self, folder, xref_traj, x_traj=None, rho_traj=None):
         """
