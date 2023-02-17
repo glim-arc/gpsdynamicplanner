@@ -8,6 +8,7 @@ from plots.plot_functions import plot_ref, plot_grid, plot_traj
 from matplotlib import cm
 from matplotlib.colors import ListedColormap
 from systems.sytem_CAR import Car
+import matplotlib.pyplot as plt
 
 
 class Environment:
@@ -25,6 +26,11 @@ class Environment:
         self.grid_enlarged = None
         self.grid_gradientX = None
         self.grid_gradientY = None
+        initialgrid = self.grid.numpy()
+        img = np.zeros(np.shape(initialgrid))
+        img.append(img)
+        img.append(initialgrid)
+        plt.imshow(img)
 
     def update_grid(self):
         """
