@@ -435,8 +435,7 @@ class MotionPlannerGrad(MotionPlanner):
         self.x_traj = x_traj
         self.xref_traj = xref_traj
 
-        if self.plot_final:
-            self.ego.animate_traj(path_final, xref_traj, x_traj, rho_traj)
+        self.ego.animate_traj(path_final, xref_traj, x_traj, rho_traj)
 
         cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj, evaluate=True)
         cost_dict = self.remove_cost_factor(cost_dict)
