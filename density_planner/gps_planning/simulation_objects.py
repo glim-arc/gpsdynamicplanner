@@ -28,8 +28,8 @@ class Environment:
         self.grid_gradientY = None
         initialgrid = self.grid.numpy()
         img = np.zeros(np.shape(initialgrid))
-        np.append(img, np.zeros(np.shape(initialgrid)))
-        np.append(img, np.zeros(np.shape(initialgrid)))
+        img = np.append(img, np.zeros(np.shape(initialgrid)))
+        img = np.append(img, np.zeros(np.shape(initialgrid)))
         plt.imshow(img)
         a=3
 
