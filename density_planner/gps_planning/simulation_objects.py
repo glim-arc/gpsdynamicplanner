@@ -28,31 +28,7 @@ class Environment:
         self.grid_gradientX = None
         self.grid_gradientY = None
 
-        initialgrid = self.grid.numpy()[:,:,0]
-        ginitialgrid = gaussian_filter(initialgrid*1.5,sigma=15)
-        newgrid = np.clip(initialgrid + ginitialgrid, 0, 1)
-        shape = list[newgrid.shape] + [1]
-        self.grid = torch.from_numpy(newgrid.reshape(shape))
 
-        #plot the original environment
-        fig = plt.figure(1)
-
-        ax1 = fig.add_subplot(1, 3, 1)
-        ax1.imshow(np.rot90(initialgrid, 1))
-        ax1.set_title('Obstacle')
-        ax1.axis("off")
-
-        ax2 = fig.add_subplot(1, 3, 2)
-        ax2.imshow(np.rot90(ginitialgrid, 1))
-        ax2.set_title('gps')
-        ax2.axis("off")
-
-        ax3 = fig.add_subplot(1, 3, 2)
-        ax3.imshow(np.rot90(newgrid, 1))
-        ax3.set_title('gps')
-        ax3.axis("off")
-
-        plt.show()
 
     def update_grid(self):
         """
@@ -66,11 +42,32 @@ class Environment:
             self.add_grid(obj.grid)
 
         #implement gps by adding gaussian grid, update grid
-        updatedgrid = self.grid.numpy()[:, :, number_timesteps]
+        updatedgrid = self.grid.numpy()[:, :, number_timesteps-1]
         gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=15)
         newgrid = np.clip(updatedgrid + gupdatedgrid, 0, 1)
-        shape = list[newgrid.shape] + [1]
+        shape = list(newgrid.shape) + [1]
         self.grid = torch.from_numpy(newgrid.reshape(shape))
+
+        # plot the original environment
+        if number_timesteps == 1:
+            fig = plt.figure(1)
+
+            ax1 = fig.add_subplot(1, 3, 1)
+            ax1.imshow(np.rot90(updatedgrid, 1))
+            ax1.set_title('Obstacle')
+            ax1.axis("off")
+
+            ax2 = fig.add_subplot(1, 3, 2)
+            ax2.imshow(np.rot90(gupdatedgrid, 1))
+            ax2.set_title('GPS')
+            ax2.axis("off")
+
+            ax3 = fig.add_subplot(1, 3, 3)
+            ax3.imshow(np.rot90(newgrid, 1))
+            ax3.set_title('Combined')
+            ax3.axis("off")
+
+            plt.show()
 
     def add_grid(self, grid):
         """

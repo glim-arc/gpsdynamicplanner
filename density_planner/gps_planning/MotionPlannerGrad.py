@@ -5,7 +5,7 @@ from systems.utils import listDict2dictList
 from plots.plot_functions import plot_cost
 import time
 import logging
-from gps_planning.MotionPlanner import MotionPlanner
+from motion_planning.MotionPlanner import MotionPlanner
 
 
 class MotionPlannerGrad(MotionPlanner):
@@ -62,7 +62,7 @@ class MotionPlannerGrad(MotionPlanner):
         """
         if self.plot:
             self.path_log_opt = make_path(self.path_log, self.name + "_initialTraj")
-
+            
 
         ### 1. generate random trajectory
         num_samples = self.ego.args.mp_numtraj
@@ -435,7 +435,8 @@ class MotionPlannerGrad(MotionPlanner):
         self.x_traj = x_traj
         self.xref_traj = xref_traj
 
-        self.ego.animate_traj(path_final, xref_traj, x_traj, rho_traj)
+        if self.plot_final:
+            self.ego.animate_traj(path_final, xref_traj, x_traj, rho_traj)
 
         cost, cost_dict = self.get_cost(uref_traj, x_traj, rho_traj, evaluate=True)
         cost_dict = self.remove_cost_factor(cost_dict)
