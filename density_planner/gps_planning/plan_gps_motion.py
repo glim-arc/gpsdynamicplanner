@@ -21,7 +21,7 @@ if __name__ == '__main__':
     elif args.mp_setting == "artificial":
         # comparison of all motion planning approaches in the environments generated from artificial data
         opt_methods = ["grad"]
-        mp_methods = ["grad", "grad_biased"]
+        mp_methods = ["grad"]
     elif args.mp_setting == "real":
         # comparison of the motion planning approaches in the environments generated from real-world data
         opt_methods = ["grad"]
