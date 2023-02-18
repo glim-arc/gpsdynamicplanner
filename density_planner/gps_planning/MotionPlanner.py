@@ -1,5 +1,5 @@
 import torch
-from motion_planning.utils import pos2gridpos, initialize_logging, gridpos2pos
+from gps_planning.utils import pos2gridpos, initialize_logging, gridpos2pos
 from abc import ABC, abstractmethod
 
 

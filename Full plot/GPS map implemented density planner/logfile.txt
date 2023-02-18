@@ -1,0 +1,40 @@
+2023-02-17 16:39:47,022 [INFO] 
+2023-02-17 16:39:47,022 [INFO] ###################################################################
+2023-02-17 16:39:47,022 [INFO] ###################################################################
+2023-02-17 16:39:47,022 [INFO] create random environment
+2023-02-17 16:39:51,477 [INFO] Loading Simulated Environment (seed 0)
+2023-02-17 16:39:51,478 [INFO] Start State: [0.0, -25.0, 1.5, 3.0]
+2023-02-17 16:39:51,478 [INFO] Goal Position: [0.0, 8.0]
+2023-02-17 16:39:53,658 [INFO] 
+2023-02-17 16:39:53,658 [INFO] ##### grad0: Starting motion planning test
+2023-02-17 16:42:09,396 [INFO] grad0: Planning finished in 135.74s
+2023-02-17 16:42:09,396 [INFO] grad0: Final cost coll 93.8782, goal 2.4748, bounds 0.0000, uref 0.4493
+2023-02-17 16:43:40,541 [INFO] grad0: True cost coll 216.2717, goal 2.9922, bounds 0.0000, uref 0.4493
+2023-02-17 16:43:40,542 [INFO] 
+2023-02-17 16:43:40,542 [INFO] ##### grad0: Validate trajectory
+2023-02-17 16:44:51,682 [INFO] grad0: True cost coll 399.8262, goal 2.0867, bounds 0.0000, uref 0.4493
+2023-02-17 16:44:51,682 [INFO] 
+2023-02-17 16:44:51,683 [INFO] ##### grad0: Validate trajectory
+2023-02-17 16:46:01,070 [INFO] grad0: True cost coll 149.9219, goal 2.1498, bounds 0.0000, uref 0.4493
+2023-02-17 16:46:01,070 [INFO] 
+2023-02-17 16:46:01,071 [INFO] ##### tube2MPC0.0: Starting motion planning test
+2023-02-17 16:46:02,627 [INFO] tube2MPC0.0: decision variables are initialized with zeros
+2023-02-17 16:47:56,796 [INFO] tube2MPC0.0: Average computation time: 0.3864, maximum computation time: 0.4191
+2023-02-17 16:47:56,796 [INFO] tube2MPC0.0: State trajectory error: 0.00, number failures: 57
+2023-02-17 16:47:56,868 [INFO] tube2MPC0.0: Planning finished in 115.80s
+2023-02-17 16:47:56,870 [INFO] tube2MPC0.0: Solution found
+2023-02-17 16:47:56,883 [INFO] tube2MPC0.0: True cost coll 0.0000, goal 0.8484, bounds 0.0000, uref 5.6971
+2023-02-17 16:48:07,982 [INFO] 
+2023-02-17 16:48:07,982 [INFO] ##### tube2MPC_biased0.0: Starting motion planning test
+2023-02-17 16:48:09,567 [INFO] tube2MPC_biased0.0: decision variables are initialized with zeros
+2023-02-17 16:50:11,349 [INFO] tube2MPC_biased0.0: Average computation time: 0.4007, maximum computation time: 0.5166
+2023-02-17 16:50:11,349 [INFO] tube2MPC_biased0.0: State trajectory error: 0.00, number failures: 62
+2023-02-17 16:50:11,387 [INFO] tube2MPC_biased0.0: Planning finished in 123.40s
+2023-02-17 16:50:11,389 [INFO] tube2MPC_biased0.0: Solution found
+2023-02-17 16:50:11,399 [INFO] tube2MPC_biased0.0: True cost coll 0.0000, goal 0.6625, bounds 0.0000, uref 5.3377
+2023-02-17 16:50:23,063 [INFO] 
+2023-02-17 16:50:23,063 [INFO] ##### oracle0.0: Starting motion planning test
+2023-02-17 16:58:48,522 [INFO] oracle0.0: Costs:
+2023-02-17 16:58:48,522 [INFO] [301.8489074707031, 499.6568603515625, 576.009521484375, 600.0504150390625, 0.014367794618010521, 473.1786804199219, 576.028564453125]
+2023-02-17 16:58:48,522 [INFO] oracle0.0: Planning finished in 505.46s
+2023-02-17 16:58:48,857 [INFO] oracle0.0: True cost coll 0.0144, goal 0.3019, bounds 0.0000, uref 0.8522

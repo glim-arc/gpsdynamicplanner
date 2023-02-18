@@ -19,6 +19,7 @@ class Environment:
 
     def __init__(self, objects, args, name="environment", timestep=0):
         # self.time = time
+        self.grid = None
         self.grid_size = args.grid_size
         self.current_timestep = timestep
         self.objects = objects
@@ -27,7 +28,6 @@ class Environment:
         self.grid_enlarged = None
         self.grid_gradientX = None
         self.grid_gradientY = None
-
 
 
     def update_grid(self):
@@ -44,12 +44,12 @@ class Environment:
         #implement gps by adding gaussian grid, update grid
         updatedgrid = np.array(self.grid.numpy()[:, :, number_timesteps-1], copy=True)
         gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=15)
-        newgrid = np.clip(updatedgrid + gupdatedgrid, 0, 1)
-        shape = list(newgrid.shape)
-        self.grid.numpy()[:, :, number_timesteps-1] = torch.from_numpy(newgrid.reshape(shape))
+        shape = list(updatedgrid.shape) + [1]
+        ggrid = torch.from_numpy(gupdatedgrid.reshape(shape))
+        self.grid = torch.clamp(self.grid + ggrid[:, :, :self.current_timestep + 1], 0, 1)
 
         # plot the original environment
-        if number_timesteps == 1:
+        if number_timesteps == 0:
             fig = plt.figure(1)
             ax1 = fig.add_subplot(1, 3, 1)
             ax1.imshow(np.rot90(updatedgrid, 1))
@@ -62,7 +62,7 @@ class Environment:
             ax2.axis("off")
 
             ax3 = fig.add_subplot(1, 3, 3)
-            ax3.imshow(np.rot90(newgrid, 1))
+            ax3.imshow(np.rot90(self.grid[:, :, number_timesteps-1], 1))
             ax3.set_title('Combined')
             ax3.axis("off")
 
@@ -351,10 +351,7 @@ class EgoVehicle:
         if uref_traj is not None:
             plot_ref(xref_traj, uref_traj, 'Reference Trajectory', self.args, self.system, t=self.t_vec,
                      include_date=True)
-        # grid = traj2grid(xref_traj, self.args)
-        # grid_env_max, _ = self.env.grid.max(dim=2)
-        # plot_grid(torch.clamp(grid + grid_env_max, 0, 1), self.args, name=name,
-        #           show=show, save=save, include_date=include_date, folder=folder)
+
         ego_dict = {"grid": self.env.grid,
                     "start": self.xref0,
                     "goal": self.xrefN,
@@ -395,7 +392,6 @@ class EgoVehicle:
         cmap = ListedColormap(colorarray)
 
         grid_env_sc = 127 * self.env.grid
-
 
         for i in range(xref_traj.shape[2]):
             with torch.no_grad():

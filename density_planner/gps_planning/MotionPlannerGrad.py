@@ -1,11 +1,11 @@
 import numpy as np
 import torch
-from motion_planning.utils import pos2gridpos, gridpos2pos, make_path
+from gps_planning.utils import pos2gridpos, gridpos2pos, make_path
 from systems.utils import listDict2dictList
 from plots.plot_functions import plot_cost
 import time
 import logging
-from motion_planning.MotionPlanner import MotionPlanner
+from gps_planning.MotionPlanner import MotionPlanner
 
 
 class MotionPlannerGrad(MotionPlanner):
