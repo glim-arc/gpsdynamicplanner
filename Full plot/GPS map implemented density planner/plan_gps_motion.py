@@ -25,7 +25,7 @@ if __name__ == '__main__':
     elif args.mp_setting == "artificial":
         # comparison of all motion planning approaches in the environments generated from artificial data
         opt_methods = ["grad"]
-        mp_methods = ["grad", "grad_biased", "tube2MPC", "tube2MPC_biased", "oracle"]
+        mp_methods = ["grad", "grad_biased", "tube2MPC_biased", "oracle"]
     elif args.mp_setting == "real":
         # comparison of the motion planning approaches in the environments generated from real-world data
         opt_methods = ["grad"]
@@ -168,8 +168,8 @@ if __name__ == '__main__':
     if args.mp_plot_traj:
         if len(mp_methods) != 0:
             plot_traj(ego_dict, mp_results, mp_methods, args, folder=path_log)
-        if len(opt_methods) != 0:
-            plot_traj(ego_dict, opt_results, opt_methods, args, traj_idx=-1, folder=path_log, animate=True)
+        # if len(opt_methods) != 0:
+        #     plot_traj(ego_dict, opt_results, opt_methods, args, traj_idx=k, folder=path_log, animate=True)
 
     if args.mp_save_results:
         if len(opt_methods) != 0:

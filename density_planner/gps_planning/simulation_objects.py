@@ -19,6 +19,8 @@ class Environment:
 
     def __init__(self, objects, args, name="environment", timestep=0):
         # self.time = time
+        print("Cuda",torch.cuda.is_available())
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.grid = None
         self.grid_size = args.grid_size
         self.current_timestep = timestep
@@ -36,6 +38,7 @@ class Environment:
         """
         number_timesteps = self.current_timestep + 1
         self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps))
+        self.grid.to(self.device)
         for obj in self.objects:
             if obj.grid.shape[2] < number_timesteps:
                 obj.forward_occupancy(step_size=number_timesteps - obj.grid.shape[2])
@@ -47,6 +50,7 @@ class Environment:
         shape = list(updatedgrid.shape) + [1]
         ggrid = torch.from_numpy(gupdatedgrid.reshape(shape))
         self.grid = torch.clamp(self.grid + ggrid[:, :, :self.current_timestep + 1], 0, 1)
+        self.grid.to(self.device)
 
         # plot the original environment
         if number_timesteps == 0:
