@@ -379,7 +379,7 @@ class MotionPlannerGrad(MotionPlanner):
                                                                                      cost_dict["cost_goal"],
                                                                                      cost_dict["cost_bounds"],
                                                                                      cost_dict["cost_uref"]))
-        self.plot_final = False
+        self.plot_final = True
         return cost_dict
 
     def validate_traj(self, up, xe0=None, return_time=False, biased=False):
@@ -401,8 +401,13 @@ class MotionPlannerGrad(MotionPlanner):
             xe0[:, 4, :] = 0
         rho0 = torch.ones(1, 1, 1)
 
+        bias = ""
+
+        if biased == True:
+            bias = "_biased"
+
         if self.plot_final:
-            path_final = make_path(self.path_log, self.name + "_finalTraj")
+            path_final = make_path(self.path_log, self.name + "_finalTraj"  + bias)
         else:
             path_final = None
 
