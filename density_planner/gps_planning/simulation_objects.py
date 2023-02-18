@@ -49,7 +49,7 @@ class Environment:
         self.grid = torch.clamp(self.grid + ggrid[:, :, :self.current_timestep + 1], 0, 1)
 
         # plot the original environment
-        if number_timesteps == 1:
+        if number_timesteps == 0:
             fig = plt.figure(1)
             ax1 = fig.add_subplot(1, 3, 1)
             ax1.imshow(np.rot90(updatedgrid, 1))
