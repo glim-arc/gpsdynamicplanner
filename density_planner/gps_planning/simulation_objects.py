@@ -46,7 +46,8 @@ class Environment:
 
         #implement gps by adding gaussian grid, update grid
         updatedgrid = np.array(self.grid.numpy()[:, :, number_timesteps-1], copy=True)
-        gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=15)
+        sigmaval = 15 + 1.5*self.current_timestep
+        gupdatedgrid = gaussian_filter(updatedgrid * 1.5, sigma=sigmaval)
         shape = list(updatedgrid.shape) + [1]
         ggrid = torch.from_numpy(gupdatedgrid.reshape(shape))
         self.grid = torch.clamp(self.grid + ggrid[:, :, :self.current_timestep + 1], 0, 1)
