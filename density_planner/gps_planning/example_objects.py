@@ -119,8 +119,8 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
 
     for i in range(len(obslist)):
         obs = obslist[i]
-        obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
-        map = DynamicObstacle(args, name="gpsmaps%d" % i, coord=obs, velocity_x=gps_meanvel[i],gps_growthrate=gps_growthrates[i])
+        obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs, isgps = False)
+        map = DynamicObstacle(args, name="gpsmaps%d" % i, coord=obs, velocity_x=gps_meanvel[i],gps_growthrate=gps_growthrates[i], isgps = True)
         objects.append(obj)
         gpsmaps.append(map)
 
