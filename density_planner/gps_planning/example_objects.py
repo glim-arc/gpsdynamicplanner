@@ -51,33 +51,21 @@ def create_mp_task(args, seed):
         # generate random environment
         env = create_environment(args, timestep=100, stationary=args.mp_stationary)
         logging.info("Loading Simulated Environment (seed %d)" % (seed))
-        if seed < 20:
-            xref0 = torch.tensor([0, -25, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
-            xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
-        # else:
-        #     valid = False
-        #     while not valid:
-        #         pos_0 = np.array([-5, 5]) + np.array([10, 5]) * np.random.rand(2)
-        #         pos_N = np.array([-5, -30]) + np.array([10, 10]) * np.random.rand(2)
-        #         theta_0 = -0.5 - 1.6 * np.random.rand(1)
-        #         v_0 = 1 + 8 * np.random.rand(1)
-        #         valid = check_start_goal(env.grid, pos_0, pos_N, theta_0, v_0, args)
-        #     xref0 = torch.tensor([pos_0[0], pos_0[1], theta_0[0], v_0[0], 0]).reshape(1, -1, 1).type(torch.FloatTensor)
-        #     xrefN = torch.tensor([pos_N[0], pos_N[1], 0, 0, 0]).reshape(1, -1, 1)
+
+        #start point
+        xref0 = torch.tensor([0, -25, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
+        #goal point
+        xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
+
     if args.mp_plot_envgrid:
         plot_grid(env, args, timestep=1, save=True)
-        # for t in [1, 20, 40, 60, 80, 100]:
-        #     plot_grid(env, args, timestep=t, save=False)
+        for t in [1, 20, 40, 60, 80, 100]:
+            plot_grid(env, args, timestep=t, save=False)
     logging.info("Start State: [%.1f, %.1f, %.1f, %.1f]" % (xref0[0, 0, 0], xref0[0, 1, 0], xref0[0, 2, 0], xref0[0, 3, 0]))
     logging.info("Goal Position: [%.1f, %.1f]" % (xrefN[0, 0, 0], xrefN[0, 1, 0]))
 
     # create the ego vehicle
     ego = EgoVehicle(xref0, xrefN, env, args, video=args.mp_video)
-    # if args.mp_use_realEnv:
-    #     ego.system.X_MIN_MP[0, 0, 0] = args.environment_size[0] + 0.1
-    #     ego.system.X_MIN_MP[0, 1, 0] = args.environment_size[2] + 0.1
-    #     ego.system.X_MAX_MP[0, 0, 0] = args.environment_size[1] - 0.1
-    #     ego.system.X_MAX_MP[0, 1, 0] = args.environment_size[3] - 0.1
     return ego
 
 
@@ -93,51 +81,48 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     :return: environment
     """
     logging.info("create random environment")
-    #objects = create_street(args)
+    # num_static = 5 #np.random.randint(4, 8)
+    # num_dynamics = 0 #np.random.randint(6, 10)
+    # for i in range(num_static + num_dynamics):
+    #     wide = np.random.randint(5, 40) / 10
+    #     height = np.random.randint(5, 40) / 10
+    #     xstart = np.random.randint(-7, 7)
+    #     ystart = np.random.randint(-23, 5)
+    #     certainty = np.random.randint(3, 10) / 10
+    #     spread = np.random.randint(1, 30)
+    #     obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread])
+    #     if not stationary and i >= num_static:
+    #         vx = np.random.randint(-2, 2)
+    #         vy = np.random.randint(-2, 2)
+    #         obj = DynamicObstacle(args, name="staticObs%d" % (i - num_static), coord=obs, velocity_x=vx,
+    #                               velocity_y=vy)
+    #     else:
+    #         obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
+    #     objects.append(obj)
+    #obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread]) cc
+
+    wide = 3
+    height = 8
+    obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 1])
+    obs2 = np.array([-3, -3 + wide, -12, -12 + height, 1, 1])
+    obs3 = np.array([3, 3 + wide, 0, 0 + height, 1, 1])
+    obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 1])
+    obs5 = np.array([0, 0 + wide, -20, -20 + height/2, 1, 1])
+
     objects = []
-    if object_str_list is not None:
-        objects = []
-        # for obj_str in object_str_list:
-        #     obj = globals()["create_" + obj_str](args)
-        #     if isinstance(obj, list):
-        #         objects += obj
-        #     else:
-        #         objects.append(obj)
-    else:
-        num_static = 5 #np.random.randint(4, 8)
-        num_dynamics = 0 #np.random.randint(6, 10)
-        # for i in range(num_static + num_dynamics):
-        #     wide = np.random.randint(5, 40) / 10
-        #     height = np.random.randint(5, 40) / 10
-        #     xstart = np.random.randint(-7, 7)
-        #     ystart = np.random.randint(-23, 5)
-        #     certainty = np.random.randint(3, 10) / 10
-        #     spread = np.random.randint(1, 30)
-        #     obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread])
-        #     if not stationary and i >= num_static:
-        #         vx = np.random.randint(-2, 2)
-        #         vy = np.random.randint(-2, 2)
-        #         obj = DynamicObstacle(args, name="staticObs%d" % (i - num_static), coord=obs, velocity_x=vx,
-        #                               velocity_y=vy)
-        #     else:
-        #         obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
-        #     objects.append(obj)
+    gpsmaps = []
 
-        #obs = np.array([xstart, xstart + wide, ystart, ystart + height, certainty, spread]) cc
-        wide = 3
-        height = 8
-        obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 1])
-        obs2 = np.array([-3, -3 + wide, -12, -12 + height, 1, 1])
-        obs3 = np.array([3, 3 + wide, 0, 0 + height, 1, 1])
-        obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 1])
-        obs5 = np.array([0, 0 + wide, -20, -20 + height/2, 1, 1])
 
-        obslist = [obs1, obs2, obs3, obs4, obs5]
+    obslist = [obs1, obs2, obs3, obs4, obs5]
+    gps_growthrates = [0.2, 0, 0.2, 0, 0]
+    gps_meanvel = [0.1, 0, -0.1, 0, 0]
 
-        for i in range(len(obslist)):
-            obs = obslist[i]
-            obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
-            objects.append(obj)
+    for i in range(len(obslist)):
+        obs = obslist[i]
+        obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs)
+        map = DynamicObstacle(args, name="gpsmaps%d" % i, coord=obs, velocity_x=gps_meanvel[i],gps_growthrate=gps_growthrates[i])
+        objects.append(obj)
+        gpsmaps.append(map)
 
     environment = Environment(objects, args, name=name)
     if timestep > 0:
