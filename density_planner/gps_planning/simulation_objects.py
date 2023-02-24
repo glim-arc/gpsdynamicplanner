@@ -283,8 +283,9 @@ class DynamicObstacle(StaticObstacle):
         self.velocity_y = 0
         self.gps_growthrate = gps_growthrate
 
+        #testing parameter
         self.growshrink = False
-        self.x_offset = 1.2
+        self.x_offset = 1.1
         self.onesidegrow = True
         self.targetbase = 0
         self.movingbase = 2
