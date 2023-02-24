@@ -334,9 +334,9 @@ class DynamicObstacle(StaticObstacle):
         gpsmap = torch.clamp(gpsmap / self.sum, 0, 1)
 
         if self.onesidegrow and self.basenum == self.targetbase:
-            gpsmap = self.gps_shift_array(iter=1, grid=samplegrid, step_x=self.x_offset, step_y=0, fill=0)
+            gpsmap = self.gps_shift_array(iter=-1, grid=samplegrid, step_x=self.velocity_x, step_y=0, fill=0)
         if self.onesidegrow and self.basenum == self.movingbase:
-            gpsmap = self.gps_shift_array(iter=1, grid=samplegrid, step_x=self.x_offset, step_y=0, fill=0)
+            gpsmap = self.gps_shift_array(iter=-1, grid=samplegrid, step_x=self.velocity_x, step_y=0, fill=0)
 
         self.gps_grid[:, :, self.current_timestep] = gpsmap
 
@@ -399,13 +399,15 @@ class DynamicObstacle(StaticObstacle):
         gpsmap = torch.FloatTensor(gupdatedgrid)
 
         gpsmap = torch.clamp(gpsmap/self.sum, 0, 1)
-        step_x = int(step_x*iter)
-        step_y = int(step_y*iter)
 
         if self.onesidegrow and self.basenum == self.targetbase:
             step_x = int(self.x_offset*10)
-        if self.onesidegrow and self.basenum == self.movingbase:
+        elif self.onesidegrow and self.basenum == self.movingbase:
             step_x = int(step_x * iter-self.x_offset*10)
+        else:
+            step_x = int(step_x * iter)
+
+        step_y = int(step_y * iter)
 
         result = torch.zeros_like(gpsmap)
 

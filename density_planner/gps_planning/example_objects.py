@@ -76,7 +76,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
 
     #one side
     gps_growthrates = [0, 0, -0.05, 0, 0]
-    gps_meanvel = [0, 0, 0.05, 0, 0]
+    gps_meanvel = [0, 0, 0.3, 0, 0]
 
     # one side static
     # gps_growthrates = [0, 0, 0, 0, 0]
