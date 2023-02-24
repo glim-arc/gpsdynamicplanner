@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from gps_planning.utils import pos2gridpos, traj2grid, shift_array, \
-    pred2grid, get_mesh_sample_points, sample_pdf, enlarge_grid, compute_gradient
+    pred2grid, get_mesh_sample_points, sample_pdf, enlarge_grid, compute_gradient, make_path
 from density_training.utils import load_nn, get_nn_prediction
 from data_generation.utils import load_inputmap, load_outputmap
 from plots.plot_functions import plot_ref, plot_grid, plot_traj
@@ -20,19 +20,20 @@ class Environment:
     def __init__(self, objects, args, name="environment", timestep=0):
         # self.time = time
         print("Cuda",torch.cuda.is_available())
-        self.custom_cost = True
+        self.custom_cost = False
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.grid_size = args.grid_size
-        self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], 1)) #obstacle grid
-        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], 1))
+        self.grid = None
+        self.gps_grid = None
         self.grid_size = args.grid_size
         self.current_timestep = timestep
         self.objects = objects
-        self.update_grid()
         self.name = name
         self.grid_enlarged = None
         self.grid_gradientX = None
         self.grid_gradientY = None
+        self.args = args
+        self.update_grid()
 
 
     def update_grid(self):
@@ -40,65 +41,90 @@ class Environment:
         forward object occupancies to the current timestep and add all grids together
         """
         number_timesteps = self.current_timestep + 1
-        self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps))
+        self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps))  # obstacle grid
+        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps))
         self.grid.to(self.device)
+        self.gps_grid.to(self.device)
         for obj in self.objects:
-            if obj.grid.shape[2] < number_timesteps:
-                obj.forward_occupancy(step_size=number_timesteps - obj.grid.shape[2])
-
             if obj.isgps == True:
-                self.add_grid(obj.gps_grid)
+                if obj.gps_grid.shape[2] < number_timesteps:
+                    obj.forward_occupancy(step_size=number_timesteps - obj.gps_grid.shape[2])
+
+                self.add_gps_grid(obj.gps_grid)
+                self.add_grid(obj.grid)
             else:
+                if obj.grid.shape[2] < number_timesteps:
+                    obj.forward_occupancy(step_size=number_timesteps - obj.grid.shape[2])
                 self.add_grid(obj.grid)
 
         if self.custom_cost == False:
+            self.grid = torch.clamp(self.grid + self.gps_grid, 0, 1)
+
             # plot the original environment
-            if self.current_timestep == 1:
-                curgrid = self.grid[:, :, self.current_timestep].clone
-                curgpsgrid = self.gps_grid[:, :, self.current_timestep].clone
-                self.grid = self.grid + self.gps_grid
+            if self.current_timestep == 100:
+                # curgrid = self.grid[:, :, 0].clone().detach()
+                # curgpsgrid = self.gps_grid[:, :, 0].clone().detach()
+                # self.grid = self.grid + self.gps_grid
+                #
+                # fig = plt.figure(1)
+                # ax1 = fig.add_subplot(1, 3, 1)
+                # ax1.imshow(np.rot90(curgrid.numpy(), 1))
+                # ax1.set_title('Obstacle')
+                # ax1.axis("off")
+                #
+                # ax2 = fig.add_subplot(1, 3, 2)
+                # ax2.imshow(np.rot90(curgpsgrid.numpy(), 1))
+                # ax2.set_title('GPS')
+                # ax2.axis("off")
+                #
+                # ax3 = fig.add_subplot(1, 3, 3)
+                # ax3.imshow(np.rot90(self.grid[:, :, self.current_timestep - 1].numpy(), 1))
+                # ax3.set_title('Combined')
+                # ax3.axis("off")
+                #
+                # plt.show()
+                self.grid_visualizer()
 
-                fig = plt.figure(1)
-                ax1 = fig.add_subplot(1, 3, 1)
-                ax1.imshow(np.rot90(curgrid, 1))
-                ax1.set_title('Obstacle')
-                ax1.axis("off")
+    def grid_visualizer(self):
+        folder = make_path(self.args.path_plot_motion, "_gps_dynamic")
 
-                ax2 = fig.add_subplot(1, 3, 2)
-                ax2.imshow(np.rot90(curgpsgrid, 1))
-                ax2.set_title('GPS')
-                ax2.axis("off")
+        # create colormap
+        greys = cm.get_cmap('Greys')
+        grey_col = greys(range(0, 256))
+        greens = cm.get_cmap('Greens')
+        green_col = greens(range(0, 256))
+        blue = np.array([[0.212395, 0.359683, 0.55171, 1.]])
+        # yellow = np.array([[0.993248, 0.906157, 0.143936, 1.      ]])
+        colorarray = np.concatenate((grey_col[::2, :], green_col[::2, :], blue))
+        cmap = ListedColormap(colorarray)
 
-                ax3 = fig.add_subplot(1, 3, 3)
-                ax3.imshow(np.rot90(self.grid[:, :, self.current_timestep - 1], 1))
-                ax3.set_title('Combined')
-                ax3.axis("off")
+        grid_env_sc = 127 * self.gps_grid.clone().detach()
 
-                plt.show()
-            else:
-                self.grid = self.grid + self.gps_grid
+        # plt.imshow(np.rot90(self.gps_grid[:, :, 0].numpy(), 1))
+        # plt.show()
+
+        for i in range(self.gps_grid.shape[2]):
+            grid_all = torch.clamp(grid_env_sc[:, :, i], 0, 256)
+            plot_grid(grid_all, self.args, name="iter%d" % i, cmap=cmap, show=False, save=True, folder=folder)
+
+        grid_env_sc = 127 * self.grid.clone().detach()
+        folder = make_path(self.args.path_plot_motion, "_gps+grid")
+
+        for i in range(self.grid.shape[2]):
+            grid_all = torch.clamp(grid_env_sc[:, :, i], 0, 256)
+            plot_grid(grid_all, self.args, name="iter%d" % i, cmap=cmap, show=False, save=True, folder=folder)
 
     def add_gps_grid(self, grid):
         """
         add individual object grid to the overall occupancy grid
         """
-        self.gps_grid = self.grid + grid[:, :, :self.current_timestep + 1]
+        self.gps_grid = torch.clamp(self.gps_grid + grid[:, :, :self.current_timestep + 1], 0, 1)
 
     def add_grid(self, grid):
         """
         add individual object grid to the overall occupancy grid
         """
         self.grid = torch.clamp(self.grid + grid[:, :, :self.current_timestep + 1], 0, 1)
-
-    def add_object(self, obj):
-        """
-        add individual object to the environment and add occupancy grid
-        """
-        if obj.grid_size == self.grid_size and isinstance(obj, StaticObstacle):
-            self.objects.append(obj)
-            self.add_grid(obj.grid)
-        else:
-            raise Exception("Gridsize must match and object must be of type StaticObstacle!")
 
     def forward_occupancy(self, step_size=1):
         """
@@ -159,10 +185,19 @@ class StaticObstacle:
         self.current_timestep = 0
         self.name = name
         self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], timestep + 1))
+        self.grid.to(self.device)
+        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], timestep + 1))
+        self.gps_grid.to(self.device)
         self.bounds = [None for _ in range(timestep + 1)]
         self.occupancies = []
-        self.add_occupancy(args, pos=coord[0:4], certainty=coord[4], spread=coord[5])
+        self.base_sigma = 1
+
+        self.basenum = int(name[-1:])
+        if self.basenum == 0 or self.basenum == 2:
+            self.base_sigma = 7
+
         self.isgps = isgps
+        self.add_occupancy(args, pos=coord[0:4], certainty=coord[4], spread=coord[5])
 
     def add_occupancy(self, args, pos, certainty=1, spread=1, pdf_form='square'):
         """
@@ -198,6 +233,16 @@ class StaticObstacle:
         if normalise:
             self.grid[:, :, self.current_timestep] /= self.grid[:, :, self.current_timestep].sum()
 
+        # implement gps by adding gaussian grid, update grid
+        samplegrid = np.array(self.grid[:, :, self.current_timestep], copy=True)
+        sigmaval = self.base_sigma
+        gupdatedgrid = gaussian_filter(samplegrid * 1.5, sigma=sigmaval)
+        gpsmap = torch.FloatTensor(gupdatedgrid)
+        self.sum = 1
+        gpsmap = torch.clamp(gpsmap / self.sum, 0, 1)
+
+        self.gps_grid[:, :, self.current_timestep] = gpsmap
+
     def forward_occupancy(self, step_size=1):
         """
         forward the obstacle occupancies in time
@@ -205,6 +250,9 @@ class StaticObstacle:
         :param step_size: number of time steps the obstacle should be forwarded
         """
         self.grid = torch.cat((self.grid, torch.repeat_interleave(self.grid[:, :, [self.current_timestep]], step_size,
+                                                                  dim=2)), dim=2)
+
+        self.gps_grid = torch.cat((self.gps_grid, torch.repeat_interleave(self.gps_grid[:, :, [self.current_timestep]], step_size,
                                                                   dim=2)), dim=2)
         self.bounds += [self.bounds[self.current_timestep]] * step_size
         self.current_timestep += step_size
@@ -218,7 +266,7 @@ class DynamicObstacle(StaticObstacle):
     Dynamic object with occupancy map, with gps
     """
 
-    def __init__(self, args, coord, name="dynamicObstacle", timestep=0, velocity_x=0, gps_growthrate=0):
+    def __init__(self, args, coord, name="dynamicObstacle", timestep=0, velocity_x=0, gps_growthrate=0, isgps = True):
         """
         initialize object
 
@@ -234,7 +282,13 @@ class DynamicObstacle(StaticObstacle):
         self.velocity_x = velocity_x
         self.velocity_y = 0
         self.gps_growthrate = gps_growthrate
-        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], 1))
+
+        self.growshrink = False
+        self.x_offset = 1.2
+        self.onesidegrow = True
+        self.targetbase = 0
+        self.movingbase = 2
+
         super().__init__(args, coord, name=name, timestep=timestep)
 
     def add_occupancy(self, args, pos, certainty=1, spread=1, pdf_form='square'):
@@ -272,11 +326,23 @@ class DynamicObstacle(StaticObstacle):
             self.grid[:, :, self.current_timestep] /= self.grid[:, :, self.current_timestep].sum()
 
         # implement gps by adding gaussian grid, update grid
-        samplegrid = np.array(self.grid.numpy()[:, :, self.current_timestep], copy=True)
-        sigmaval = 15 + self.gps_growthrate * self.current_timestep
+        samplegrid = np.array(self.grid[:, :, self.current_timestep], copy=True)
+        sigmaval = self.base_sigma
         gupdatedgrid = gaussian_filter(samplegrid * 1.5, sigma=sigmaval)
+        gpsmap = torch.FloatTensor(gupdatedgrid)
+        self.sum = 1
+        gpsmap = torch.clamp(gpsmap / self.sum, 0, 1)
 
-        self.gps_grid[:, :, self.current_timestep] = torch.FloatTensor(gupdatedgrid)
+        if self.onesidegrow and self.basenum == self.targetbase:
+            gpsmap = self.gps_shift_array(iter=1, grid=samplegrid, step_x=self.x_offset, step_y=0, fill=0)
+        if self.onesidegrow and self.basenum == self.movingbase:
+            gpsmap = self.gps_shift_array(iter=1, grid=samplegrid, step_x=self.x_offset, step_y=0, fill=0)
+
+        self.gps_grid[:, :, self.current_timestep] = gpsmap
+
+        # plt.imshow(np.rot90(self.gps_grid[:, :, self.current_timestep].numpy(), 1))
+        # plt.show()
+
         self.gps_grid.to(self.device)
 
     def forward_occupancy(self, step_size=1):
@@ -289,17 +355,22 @@ class DynamicObstacle(StaticObstacle):
         #forward the grid
         self.grid = torch.cat((self.grid, torch.repeat_interleave(self.grid[:, :, [self.current_timestep]], step_size,
                                                                   dim=2)), dim=2)
-
         # move the gps map
+        sum = 1
+        self.gps_grid = torch.cat((self.gps_grid, torch.zeros((self.grid_size[0], self.grid_size[1], step_size))), dim=2)
+        self.gps_grid.to(self.device)
         for i in range(step_size):
-            self.gps_grid[:, :, self.current_timestep + 1 + i] = self.gps_grid(self.grid[:, :, self.current_timestep + i],
+            self.gps_grid[:, :, self.current_timestep + 1 + i] = self.gps_shift_array(i,self.grid[:, :, self.current_timestep + i],
                                                                          self.velocity_x, self.velocity_y)
             self.bounds.append(self.bounds[self.current_timestep + i] +
                                torch.tensor([self.velocity_x, self.velocity_x, self.velocity_y, self.velocity_y]))
 
+            # plt.imshow(np.rot90(self.gps_grid[:, :, self.current_timestep + 1 + i].numpy(), 1))
+            # plt.show()
+
         self.current_timestep += step_size
 
-    def gps_shift_array(self, grid, step_x=0, step_y=0, fill=0):
+    def gps_shift_array(self,iter, grid, step_x=0, step_y=0, fill=0):
         """
         shift array or tensor
 
@@ -312,22 +383,42 @@ class DynamicObstacle(StaticObstacle):
 
         # implement gps by adding gaussian grid, update grid
         samplegrid = np.array(grid, copy=True)
-        sigmaval = 15 + self.gps_growthrate * self.current_timestep
+        if self.gps_growthrate == 0:
+            sigmaval = self.base_sigma
+        else:
+            sigmaval = self.gps_growthrate * iter + self.base_sigma
+
+            if self.growshrink == True:
+                sigmaval = self.gps_growthrate * iter*2 + self.base_sigma
+
+                if iter > 50:
+                    iter = 100 - iter
+                    sigmaval = self.gps_growthrate * iter*2 + self.base_sigma
+
         gupdatedgrid = gaussian_filter(samplegrid * 1.5, sigma=sigmaval)
-        result = torch.FloatTensor(gupdatedgrid)
-        step_x *= self.current_timestep
-        step_y *= self.current_timestep
+        gpsmap = torch.FloatTensor(gupdatedgrid)
+
+        gpsmap = torch.clamp(gpsmap/self.sum, 0, 1)
+        step_x = int(step_x*iter)
+        step_y = int(step_y*iter)
+
+        if self.onesidegrow and self.basenum == self.targetbase:
+            step_x = int(self.x_offset*10)
+        if self.onesidegrow and self.basenum == self.movingbase:
+            step_x = int(step_x * iter-self.x_offset*10)
+
+        result = torch.zeros_like(gpsmap)
 
         if step_x > 0:
             result[:step_x, :] = fill
-            result[step_x:, :] = grid[:-step_x, :]
+            result[step_x:, :] = gpsmap[:-step_x, :]
         elif step_x < 0:
             result[step_x:, :] = fill
-            result[:step_x, :] = grid[-step_x:, :]
+            result[:step_x, :] = gpsmap[-step_x:, :]
         else:
-            result = grid
+            result = gpsmap
 
-        result_new = torch.zeros_like(grid)
+        result_new = torch.zeros_like(gpsmap)
         if step_y > 0:
             result_new[:, :step_y] = fill
             result_new[:, step_y:] = result[:, :-step_y]
@@ -336,6 +427,8 @@ class DynamicObstacle(StaticObstacle):
             result_new[:, :step_y] = result[:, -step_y:]
         else:
             result_new = result
+
+        result_new.to(self.device)
         return result_new
 
 
