@@ -3,7 +3,7 @@
 Official Code for "Density Planner: Minimizing Collision Risk in Motion Planning with Dynamic Obstacles using Density-based Reachability"
 
 ## GPS Planner
-1. GPS planner
+1. GPS planner COMMAND
 ```bash
 python -m gps_planning.plan_gps_motion --mp_setting gps
 ```
