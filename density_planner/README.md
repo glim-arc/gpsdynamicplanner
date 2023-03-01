@@ -8,6 +8,9 @@ Official Code for "Density Planner: Minimizing Collision Risk in Motion Planning
 python -m gps_planning.plan_gps_motion --mp_setting gps
 ```
 
+for cluster
+conda install -c conda-forge texlive-core
+
 parameter list
 
 ```
@@ -25,8 +28,8 @@ git clone https://github.com/MIT-REALM/density_planner.git
 
 2. Create and activate new environment
 ```bash
-conda create --name density_planner python=3.8
-conda activate density_planner
+conda create --name gps python=3.8
+conda activate gps
 ```
 
 3. Install requirements from "requirements.txt"
