@@ -16,6 +16,8 @@ class MotionPlanner(ABC):
         self.weight_uref = ego.args.weight_uref
         self.weight_bounds = ego.args.weight_bounds
         self.weight_coll = ego.args.weight_coll
+        self.weight_gps = ego.args.weight_gps
+
         self.plot = ego.args.mp_plot
         if ego.args.mp_plot_final is None:
             self.plot_final = ego.args.mp_plot
@@ -87,14 +89,18 @@ class MotionPlanner(ABC):
         cost_goal, goal_reached = self.get_cost_goal(x_traj, rho_traj, evaluate=evaluate, get_max=get_max)
         cost_bounds, in_bounds = self.get_cost_bounds(x_traj, rho_traj, evaluate=evaluate, get_max=get_max)
         cost_coll = self.get_cost_coll(x_traj, rho_traj, get_max=get_max)  # for xref: 0.044s
+        cost_gps = self.get_cost_gps(x_traj, rho_traj, get_max=get_max)
 
         cost = self.weight_goal * cost_goal \
                + self.weight_uref * cost_uref \
                + self.weight_bounds * cost_bounds \
-               + self.weight_coll * cost_coll
+               + self.weight_coll * cost_coll \
+               + self.weight_gps * cost_gps
+
         cost_dict = {
             "cost_sum": cost,
             "cost_coll": self.weight_coll * cost_coll,
+            "cost_gps": self.weight_gps * cost_gps,
             "cost_goal": self.weight_goal * cost_goal,
             "cost_uref": self.weight_uref * cost_uref,
             "cost_bounds": self.weight_bounds * cost_bounds
@@ -211,6 +217,38 @@ class MotionPlanner(ABC):
                     cost += (rho_traj[idx, 0, i] * coll_prob * sq_dist).sum()
         return cost
 
+    def get_cost_gps(self, x_traj, rho_traj, get_max=False):
+        """
+        compute cost for high collision probabilities
+        :param x_traj: torch.Tensor
+            1 x 4 x N_sim
+        :param rho_traj: torch.Tensor
+            1 x 1 x N_sim
+        :return: cost: torch.Tensor
+            cost for collisions
+        """
+        cost = torch.zeros(1)
+
+        with torch.no_grad():
+            gridpos_x, gridpos_y = pos2gridpos(self.ego.args, pos_x=x_traj[:, 0, :], pos_y=x_traj[:, 1, :])
+            gridpos_x = torch.clamp(gridpos_x, 0, self.ego.args.grid_size[0] - 1)
+            gridpos_y = torch.clamp(gridpos_y, 0, self.ego.args.grid_size[1] - 1)
+        for i in range(x_traj.shape[2]):
+            gradX = self.ego.env.gps_grid_gradientX[gridpos_x[:, i], gridpos_y[:, i], i]
+            gradY = self.ego.env.gps_grid_gradientY[gridpos_x[:, i], gridpos_y[:, i], i]
+            if torch.any(gradX != 0) or torch.any(gradY != 0):
+                idx = torch.logical_or(gradX != 0, gradY != 0).nonzero(as_tuple=True)[0]
+                des_gridpos_x = gridpos_x[idx, i] + 100 * gradX[idx]
+                des_gridpos_y = gridpos_y[idx, i] + 100 * gradY[idx]
+                des_pos_x, des_pos_y = gridpos2pos(self.ego.args, pos_x=des_gridpos_x, pos_y=des_gridpos_y)
+                sq_dist = (des_pos_x - x_traj[idx, 0, i]) ** 2 + (des_pos_y - x_traj[idx, 1, i]) ** 2
+                coll_prob = self.ego.env.gps_grid[gridpos_x[idx, i], gridpos_y[idx, i], i]
+                if get_max:
+                    cost += (rho_traj[idx, 0, i] * coll_prob * sq_dist).max()
+                else:
+                    cost += (rho_traj[idx, 0, i] * coll_prob * sq_dist).sum()
+        return cost
+
     def remove_cost_factor(self, cost_dict):
         """
         remove the weighting factors from the entries of the cost dictionary
@@ -221,6 +259,7 @@ class MotionPlanner(ABC):
         """
 
         cost_dict["cost_coll"] = cost_dict["cost_coll"] / self.weight_coll
+        cost_dict["cost_gps"] = cost_dict["cost_gps"] / self.weight_gps
         cost_dict["cost_goal"] = cost_dict["cost_goal"] / self.weight_goal
         cost_dict["cost_bounds"] = cost_dict["cost_bounds"] / self.weight_bounds
         cost_dict["cost_uref"] = cost_dict["cost_uref"] / self.weight_uref

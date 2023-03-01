@@ -20,7 +20,7 @@ class Environment:
     def __init__(self, objects, args, name="environment", timestep=0):
         # self.time = time
         print("Cuda",torch.cuda.is_available())
-        self.custom_cost = False
+        self.custom_cost = True
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.grid_size = args.grid_size
         self.grid = None
@@ -32,6 +32,8 @@ class Environment:
         self.grid_enlarged = None
         self.grid_gradientX = None
         self.grid_gradientY = None
+        self.gps_grid_gradientX = None
+        self.gps_grid_gradientY = None
         self.args = args
         self.update_grid()
 
@@ -84,6 +86,8 @@ class Environment:
                 #
                 # plt.show()
                 self.grid_visualizer()
+        else:
+            self.grid_visualizer()
 
     def grid_visualizer(self):
         folder = make_path(self.args.path_plot_motion, "_gps_dynamic")
@@ -100,15 +104,17 @@ class Environment:
 
         grid_env_sc = 127 * self.gps_grid.clone().detach()
 
-        # plt.imshow(np.rot90(self.gps_grid[:, :, 0].numpy(), 1))
-        # plt.show()
-
         for i in range(self.gps_grid.shape[2]):
             grid_all = torch.clamp(grid_env_sc[:, :, i], 0, 256)
             plot_grid(grid_all, self.args, name="iter%d" % i, cmap=cmap, show=False, save=True, folder=folder)
 
-        grid_env_sc = 127 * self.grid.clone().detach()
-        folder = make_path(self.args.path_plot_motion, "_gps+grid")
+        if self.custom_cost == False:
+            grid_env_sc = 127 * self.grid.clone().detach()
+        else:
+            grid_env_sc = torch.clamp(self.grid + self.gps_grid, 0, 1)
+            grid_env_sc = 127 * grid_env_sc.clone().detach()
+
+        folder = make_path(self.args.path_plot_motion, "gps+grid")
 
         for i in range(self.grid.shape[2]):
             grid_all = torch.clamp(grid_env_sc[:, :, i], 0, 256)
@@ -163,8 +169,24 @@ class Environment:
                 s += 10
                 missingGrad = torch.logical_and(self.grid != 0, torch.logical_and(grid_gradientX == 0, grid_gradientY == 0))
 
+        if self.gps_grid_gradientX is None:
+            gps_grid_gradientX, gps_grid_gradientY = compute_gradient(self.gps_grid, step=1)
+            s = 5
+            missingGrad = torch.logical_and(self.gps_grid != 0,
+                                            torch.logical_and(gps_grid_gradientX == 0, gps_grid_gradientY == 0))
+            while torch.any(missingGrad):
+                idx = missingGrad.nonzero(as_tuple=True)
+                gps_grid_gradientX_new, gps_grid_gradientY_new = compute_gradient(self.gps_grid, step=s)
+                gps_grid_gradientX[idx] += s * gps_grid_gradientX_new[idx]
+                gps_grid_gradientY[idx] += s * gps_grid_gradientY_new[idx]
+                s += 10
+                missingGrad = torch.logical_and(self.grid != 0,
+                                                torch.logical_and(gps_grid_gradientX == 0, gps_grid_gradientY == 0))
+
             self.grid_gradientX = grid_gradientX
             self.grid_gradientY = grid_gradientY
+            self.gps_grid_gradientX = gps_grid_gradientX
+            self.gps_grid_gradientY = gps_grid_gradientY
 
 class StaticObstacle:
     """
@@ -594,7 +616,11 @@ class EgoVehicle:
         colorarray = np.concatenate((grey_col[::2, :], green_col[::2, :], blue))
         cmap = ListedColormap(colorarray)
 
-        grid_env_sc = 127 * self.env.grid
+        if self.env.custom_cost == False:
+            grid_env_sc = 127 * self.env.grid.clone().detach()
+        else:
+            grid_env_sc = torch.clamp(self.env.grid + self.env.gps_grid, 0, 1)
+            grid_env_sc = 127 * grid_env_sc.clone().detach()
 
         for i in range(xref_traj.shape[2]):
             with torch.no_grad():
@@ -633,8 +659,11 @@ class EgoVehicle:
         colorarray = np.concatenate((grey_col[::2, :], green_col[::2, :], blue))
         cmap = ListedColormap(colorarray)
 
-        grid_env_sc = 127 * self.env.grid
-
+        if self.env.custom_cost == False:
+            grid_env_sc = 127 * self.env.grid.clone().detach()
+        else:
+            grid_env_sc = torch.clamp(self.env.grid + self.env.gps_grid, 0, 1)
+            grid_env_sc = 127 * grid_env_sc.clone().detach()
 
         for i in range(xref_traj.shape[2]):
             with torch.no_grad():
@@ -650,4 +679,3 @@ class EgoVehicle:
 
     def set_start_grid(self):
         self.grid = pred2grid(self.xref0 + self.xe0, self.rho0, self.args)
-

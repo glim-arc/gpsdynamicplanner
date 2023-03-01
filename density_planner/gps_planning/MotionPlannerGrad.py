@@ -133,6 +133,7 @@ class MotionPlannerGrad(MotionPlanner):
         if initializing:
             self.check_bounds = torch.zeros(up.shape[0], dtype=torch.bool)
             self.check_collision = torch.zeros(up.shape[0], dtype=torch.bool)
+            self.check_gps = torch.zeros(up.shape[0], dtype=torch.bool)
 
         for iter in range(epochs):
             if iter > 0:
@@ -203,6 +204,7 @@ class MotionPlannerGrad(MotionPlanner):
         cost_goal, goal_reached = self.get_cost_goal_initialize(x_traj)
         cost_bounds = torch.zeros(uref_traj.shape[0])
         cost_coll = torch.zeros(uref_traj.shape[0])
+        cost_gps = torch.zeros(uref_traj.shape[0])
         if not torch.all(self.check_bounds):
             idx_check = torch.logical_and(goal_reached, torch.logical_not(self.check_bounds))
             if torch.any(idx_check):
@@ -215,29 +217,35 @@ class MotionPlannerGrad(MotionPlanner):
             in_bounds = torch.zeros(uref_traj.shape[0], dtype=torch.bool)
             x_check = x_traj[self.check_bounds, :, :]
             cost_bounds[self.check_bounds], in_bounds[self.check_bounds] = self.get_cost_bounds_initialize(x_check)
-            if not torch.all(self.check_collision):
+            if not torch.all(self.check_collision) and not torch.all(self.check_gps):
                 idx_check = torch.logical_and(in_bounds, torch.logical_not(self.check_collision))
+                idx_check = torch.logical_and(in_bounds, torch.logical_not(self.check_gps))
                 if torch.any(idx_check):
                     self.check_collision[idx_check] = True  # TO-DO: get the right indizes
                     self.rms[idx_check, :, :] = 0
                     self.momentum[idx_check, :, :] = 0
                     self.counts[idx_check] = 0
 
-        if torch.any(self.check_collision):
+        if torch.any(self.check_collision) and torch.any(self.check_gps):
             x_check = x_traj[self.check_collision, :, :]
             cost_coll[self.check_collision] = self.get_cost_coll_initialize(x_check)  # for xref: 0.044s
+            cost_gps[self.check_gps] = self.get_cost_gps_initialize(x_check)
 
         cost = self.weight_goal * cost_goal \
                + self.weight_uref * cost_uref \
                + self.weight_bounds * cost_bounds \
-               + self.weight_coll * cost_coll
+               + self.weight_coll * cost_coll \
+               + self.weight_gps * cost_gps
+
         cost_dict = {
             "cost_sum": cost,
             "cost_coll": self.weight_coll * cost_coll,
+            "cost_coll": self.weight_gps * cost_gps,
             "cost_goal": self.weight_goal * cost_goal,
             "cost_uref": self.weight_uref * cost_uref,
             "cost_bounds": self.weight_bounds * cost_bounds
         }
+
         return cost, cost_dict
 
     def get_cost_goal_initialize(self, x_traj, rho_traj=None):
@@ -322,6 +330,33 @@ class MotionPlannerGrad(MotionPlanner):
                 des_pos_x, des_pos_y = gridpos2pos(self.ego.args, pos_x=des_gridpos_x, pos_y=des_gridpos_y)
                 sq_dist = (des_pos_x - x_traj[idx, 0, i]) ** 2 + (des_pos_y - x_traj[idx, 1, i]) ** 2
                 coll_prob = self.ego.env.grid[gridpos_x[idx, i], gridpos_y[idx, i], i]
+                cost[idx] += (coll_prob * sq_dist)
+        return cost
+
+    def get_cost_gps_initialize(self, x_traj):
+        """
+        compute cost for high collision probabilities in inilialization process
+        :param x_traj: torch.Tensor
+            1 x 4 x N_sim
+        :return: cost: torch.Tensor
+            cost for collisions
+        """
+
+        cost = torch.zeros(x_traj.shape[0])
+        with torch.no_grad():
+            gridpos_x, gridpos_y = pos2gridpos(self.ego.args, pos_x=x_traj[:, 0, :], pos_y=x_traj[:, 1, :])
+            gridpos_x = torch.clamp(gridpos_x, 0, self.ego.args.grid_size[0] - 1)
+            gridpos_y = torch.clamp(gridpos_y, 0, self.ego.args.grid_size[1] - 1)
+        for i in range(x_traj.shape[2]):
+            gradX = self.ego.env.gps_grid_gradientX[gridpos_x[:, i], gridpos_y[:, i], i]
+            gradY = self.ego.env.gps_grid_gradientY[gridpos_x[:, i], gridpos_y[:, i], i]
+            if torch.any(gradX != 0) or torch.any(gradY != 0):
+                idx = torch.logical_or(gradX != 0, gradY != 0).nonzero(as_tuple=True)[0]
+                des_gridpos_x = gridpos_x[idx, i] + 100 * gradX[idx]
+                des_gridpos_y = gridpos_y[idx, i] + 100 * gradY[idx]
+                des_pos_x, des_pos_y = gridpos2pos(self.ego.args, pos_x=des_gridpos_x, pos_y=des_gridpos_y)
+                sq_dist = (des_pos_x - x_traj[idx, 0, i]) ** 2 + (des_pos_y - x_traj[idx, 1, i]) ** 2
+                coll_prob = self.ego.env.gps_grid[gridpos_x[idx, i], gridpos_y[idx, i], i]
                 cost[idx] += (coll_prob * sq_dist)
         return cost
 

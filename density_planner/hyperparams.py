@@ -137,6 +137,7 @@ def parse_args():
     parser.add_argument('--weight_coll', type=float, default=1e-1)
     parser.add_argument('--weight_uref', type=float, default=1e-4)
     parser.add_argument('--weight_bounds', type=float, default=1e1)
+    parser.add_argument('--weight_gps', type=float, default=1e-1)
 
     # optimization with search
     parser.add_argument('--du_search', type=list, default=[1, 1])
