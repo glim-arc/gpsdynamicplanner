@@ -15,6 +15,7 @@ class MotionPlannerGrad(MotionPlanner):
 
     def __init__(self, ego, path_log=None, name="grad"):
         super().__init__(ego, name=name, path_log=path_log)
+        self.device = ego.device
         self.initial_traj = []
         self.improved_traj = []
         self.beta1 = 0.9
@@ -70,8 +71,9 @@ class MotionPlannerGrad(MotionPlanner):
         elif self.ego.args.input_type == "discr10":
             num_discr = 10
 
-        up = 0.5 * torch.randn((num_samples, 2, num_discr))
+        up = 0.5 * torch.randn((num_samples, 2, num_discr), device = self.device)
         up = up.clamp(self.ego.system.UREF_MIN, self.ego.system.UREF_MAX)
+        up.to(self.device)
 
         ### 2. make trajectory valid
         up, costs_dict = self.optimize(up, self.ego.args.mp_epochs, initializing=True)
@@ -126,14 +128,14 @@ class MotionPlannerGrad(MotionPlanner):
         else:
             folder = None
         costs_dict = []
-        self.rms = torch.zeros_like(up)
-        self.momentum = torch.zeros_like(up)
+        self.rms = torch.zeros_like(up,device=self.device)
+        self.momentum = torch.zeros_like(up, device=self.device)
         self.counts = torch.zeros(up.shape[0], 1, 1)
         up.requires_grad = True
         if initializing:
-            self.check_bounds = torch.zeros(up.shape[0], dtype=torch.bool)
-            self.check_collision = torch.zeros(up.shape[0], dtype=torch.bool)
-            self.check_gps = torch.zeros(up.shape[0], dtype=torch.bool)
+            self.check_bounds = torch.zeros(up.shape[0], dtype=torch.bool, device=self.device)
+            self.check_collision = torch.zeros(up.shape[0], dtype=torch.bool, device=self.device)
+            self.check_gps = torch.zeros(up.shape[0], dtype=torch.bool, device=self.device)
 
         for iter in range(epochs):
             if iter > 0:
@@ -202,9 +204,9 @@ class MotionPlannerGrad(MotionPlanner):
         """
         cost_uref = self.get_cost_uref(uref_traj)
         cost_goal, goal_reached = self.get_cost_goal_initialize(x_traj)
-        cost_bounds = torch.zeros(uref_traj.shape[0])
-        cost_coll = torch.zeros(uref_traj.shape[0])
-        cost_gps = torch.zeros(uref_traj.shape[0])
+        cost_bounds = torch.zeros(uref_traj.shape[0], device=self.device)
+        cost_coll = torch.zeros(uref_traj.shape[0], device=self.device)
+        cost_gps = torch.zeros(uref_traj.shape[0], device=self.device)
         if not torch.all(self.check_bounds):
             idx_check = torch.logical_and(goal_reached, torch.logical_not(self.check_bounds))
             if torch.any(idx_check):
@@ -214,7 +216,7 @@ class MotionPlannerGrad(MotionPlanner):
                 self.counts[idx_check] = 0
 
         if torch.any(self.check_bounds):
-            in_bounds = torch.zeros(uref_traj.shape[0], dtype=torch.bool)
+            in_bounds = torch.zeros(uref_traj.shape[0], dtype=torch.bool, device=self.device)
             x_check = x_traj[self.check_bounds, :, :]
             cost_bounds[self.check_bounds], in_bounds[self.check_bounds] = self.get_cost_bounds_initialize(x_check)
             if not torch.all(self.check_collision) and not torch.all(self.check_gps):
@@ -286,7 +288,7 @@ class MotionPlannerGrad(MotionPlanner):
             True if inside of valid state space for all time steps
         """
 
-        cost = torch.zeros(x_traj.shape[0])
+        cost = torch.zeros(x_traj.shape[0], device=self.device)
 
         in_bounds = torch.ones(x_traj.shape[0], dtype=torch.bool)
         if torch.any(x_traj < self.ego.system.X_MIN_MP):
@@ -316,7 +318,7 @@ class MotionPlannerGrad(MotionPlanner):
             cost for collisions
         """
 
-        cost = torch.zeros(x_traj.shape[0])
+        cost = torch.zeros(x_traj.shape[0], device=self.device)
         with torch.no_grad():
             gridpos_x, gridpos_y = pos2gridpos(self.ego.args, pos_x=x_traj[:, 0, :], pos_y=x_traj[:, 1, :])
             gridpos_x = torch.clamp(gridpos_x, 0, self.ego.args.grid_size[0] - 1)

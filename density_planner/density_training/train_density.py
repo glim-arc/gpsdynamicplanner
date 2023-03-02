@@ -89,6 +89,9 @@ if __name__ == "__main__":
     args = hyperparams.parse_args()
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
+    if torch.backends.mps.is_available():
+        args.device = "mps"
+
     run_name = args.run_name
 
     configs = create_configs(args=args)  # create different hyperparameter configurations

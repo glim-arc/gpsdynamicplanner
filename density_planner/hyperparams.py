@@ -97,12 +97,12 @@ def parse_args():
     parser.add_argument('--mp_num_envs', type=int, default=10)
     parser.add_argument('--mp_num_initial', type=int, default=1)
     parser.add_argument('--mp_recording', type=int, default=26)  # for real-world data: choose 8, 18/26 or 30
-    parser.add_argument('--mp_plot', type=bool, default=False)
+    parser.add_argument('--mp_plot', type=bool, default=True)
     parser.add_argument('--mp_plot_cost', type=bool, default=False)
     parser.add_argument('--mp_plot_traj', type=bool, default=True)
     parser.add_argument('--mp_plot_envgrid', type=bool, default=False)
-    parser.add_argument('--mp_plot_final', type=bool, default=False)
-    parser.add_argument('--gpsgridvisualize', type=bool, default=False)
+    parser.add_argument('--mp_plot_final', type=bool, default=True)
+    parser.add_argument('--gpsgridvisualize', type=bool, default=True)
     parser.add_argument('--gps_cost', type=bool, default=True)
 
     # other options

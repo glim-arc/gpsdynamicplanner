@@ -23,11 +23,7 @@ if __name__ == '__main__':
         args.weight_gps = args.weight_gps_real
 
     ### choose methods
-    if args.mp_setting == "ablation":
-        # ablation study of the optimization method (compare gradient-based, search-based and sampling-based method)
-        opt_methods = ["grad", "search", "sample"]
-        mp_methods = []
-    elif args.mp_setting == "gps":
+    if args.mp_setting == "gps":
         # comparison of all motion planning approaches in the environments generated from artificial data
         opt_methods = ["grad"]
         mp_methods = ["grad", "grad_biased"]
@@ -43,11 +39,7 @@ if __name__ == '__main__':
     else:  # custom configuration, adapt to your case
         # choose optimization methods from ["grad", "search", "sampl"]
         opt_methods = ["grad"]
-        # choose motion planning methods from  ["grad", "grad_biased", "MPC", "MPC_biased", "tubeMPC", "tubeMPC_biased",
-        #                                       "tube2MPC", "tube2MPC_biased", "tube3MPC","tube3MPC_biased", "oracle"]
         mp_methods = ["grad"] #, "MPC", "tube2MPC", "oracle"]
-        # mp_methods = ["grad", "grad_biased", "MPC", "MPC_biased", "tubeMPC", "tubeMPC_biased", "tube2MPC",
-        #               "tube2MPC_biased", "tube3MPC", "tube3MPC_biased", "oracle"]
 
     ### settings
     # specify tube radius of tube-based MPC
