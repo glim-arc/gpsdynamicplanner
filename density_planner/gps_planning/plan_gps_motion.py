@@ -13,6 +13,15 @@ if __name__ == '__main__':
     ### load hyperparameters
     args = hyperparams.parse_args()
 
+    args.device = "cuda" if torch.cuda.is_available() else "cpu"
+    # if torch.backends.mps.is_available():
+    #     args.device = "mps"
+
+    torch.device(args.device)
+
+    if args.weight_gps_real != 0:
+        args.weight_gps = args.weight_gps_real
+
     ### choose methods
     if args.mp_setting == "ablation":
         # ablation study of the optimization method (compare gradient-based, search-based and sampling-based method)

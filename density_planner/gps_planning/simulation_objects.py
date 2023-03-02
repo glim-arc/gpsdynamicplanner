@@ -19,10 +19,10 @@ class Environment:
 
     def __init__(self, objects, args, name="environment", timestep=0):
         # self.time = time
-        print("Cuda",torch.cuda.is_available())
-        self.gpsgridvisualize = False
-        self.custom_cost = True
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        print("device", args.device)
+        self.device = args.device
+        self.gpsgridvisualize = args.gpsgridvisualize
+        self.custom_cost = args.gps_cost
         self.grid_size = args.grid_size
         self.grid = None
         self.gps_grid = None
@@ -44,10 +44,8 @@ class Environment:
         forward object occupancies to the current timestep and add all grids together
         """
         number_timesteps = self.current_timestep + 1
-        self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps))  # obstacle grid
-        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps))
-        self.grid.to(self.device)
-        self.gps_grid.to(self.device)
+        self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps), device=self.device)  # obstacle grid
+        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], number_timesteps), device=self.device)
         for obj in self.objects:
             if obj.isgps == True:
                 if obj.gps_grid.shape[2] < number_timesteps:
@@ -204,13 +202,13 @@ class StaticObstacle:
         :param name:    name
         :param timestep:duration the obstacle exists
         """
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = args.device
         self.grid_size = args.grid_size
         self.current_timestep = 0
         self.name = name
-        self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], timestep + 1))
+        self.grid = torch.zeros((self.grid_size[0], self.grid_size[1], timestep + 1), device=self.device)
         self.grid.to(self.device)
-        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], timestep + 1))
+        self.gps_grid = torch.zeros((self.grid_size[0], self.grid_size[1], timestep + 1), device=self.device)
         self.gps_grid.to(self.device)
         self.bounds = [None for _ in range(timestep + 1)]
         self.occupancies = []
@@ -382,16 +380,13 @@ class DynamicObstacle(StaticObstacle):
                                                                   dim=2)), dim=2)
         # move the gps map
         sum = 1
-        self.gps_grid = torch.cat((self.gps_grid, torch.zeros((self.grid_size[0], self.grid_size[1], step_size))), dim=2)
+        self.gps_grid = torch.cat((self.gps_grid, torch.zeros((self.grid_size[0], self.grid_size[1], step_size) , device=self.device)), dim=2)
         self.gps_grid.to(self.device)
         for i in range(step_size):
             self.gps_grid[:, :, self.current_timestep + 1 + i] = self.gps_shift_array(i,self.grid[:, :, self.current_timestep + i],
                                                                          self.velocity_x, self.velocity_y)
             self.bounds.append(self.bounds[self.current_timestep + i] +
                                torch.tensor([self.velocity_x, self.velocity_x, self.velocity_y, self.velocity_y]))
-
-            # plt.imshow(np.rot90(self.gps_grid[:, :, self.current_timestep + 1 + i].numpy(), 1))
-            # plt.show()
 
         self.current_timestep += step_size
 
@@ -434,7 +429,7 @@ class DynamicObstacle(StaticObstacle):
 
         step_y = int(step_y * iter)
 
-        result = torch.zeros_like(gpsmap)
+        result = torch.zeros_like(gpsmap, device=self.device)
 
         if step_x > 0:
             result[:step_x, :] = fill
@@ -445,7 +440,7 @@ class DynamicObstacle(StaticObstacle):
         else:
             result = gpsmap
 
-        result_new = torch.zeros_like(gpsmap)
+        result_new = torch.zeros_like(gpsmap, device=self.device)
         if step_y > 0:
             result_new[:, :step_y] = fill
             result_new[:, step_y:] = result[:, :-step_y]
@@ -465,6 +460,7 @@ class EgoVehicle:
     """
 
     def __init__(self, xref0, xrefN, env, args, pdf0=None, name="egoVehicle", video=False):
+        self.device = env.device
         self.xref0 = xref0
         self.xrefN = xrefN
         self.system = Car()
@@ -528,16 +524,16 @@ class EgoVehicle:
 
         if self.args.input_type == "discr10" and up.shape[2] != 10:
             N_sim = up.shape[2] * (self.args.N_sim_max // 10) + 1
-            up = torch.cat((up, torch.zeros(up.shape[0], up.shape[1], 10 - up.shape[2])), dim=2)
+            up = torch.cat((up, torch.zeros(up.shape[0], up.shape[1], 10 - up.shape[2])), dim=2, device=self.device)
         elif self.args.input_type == "discr5" and up.shape[2] != 5:
             N_sim = up.shape[2] * (self.args.N_sim_max // 5) + 1
-            up = torch.cat((up, torch.zeros(up.shape[0], up.shape[1], 5 - up.shape[2])), dim=2)
+            up = torch.cat((up, torch.zeros(up.shape[0], up.shape[1], 5 - up.shape[2])), dim=2, device=self.device)
         else:
             N_sim = self.args.N_sim
 
         if use_nn: # approximate with density NN
-            xe_traj = torch.zeros(xe0.shape[0], xref_traj.shape[1], xref_traj.shape[2])
-            rho_log_unnorm = torch.zeros(xe0.shape[0], 1, xref_traj.shape[2])
+            xe_traj = torch.zeros(xe0.shape[0], xref_traj.shape[1], xref_traj.shape[2], device=self.device)
+            rho_log_unnorm = torch.zeros(xe0.shape[0], 1, xref_traj.shape[2], device=self.device)
             t_vec = torch.arange(0, self.args.dt_sim * N_sim - 0.001, self.args.dt_sim * self.args.factor_pred)
 
             # 2. predict x(t) and rho(t) for times t
@@ -579,7 +575,7 @@ class EgoVehicle:
             plot_ref(xref_traj, uref_traj, 'Reference Trajectory', self.args, self.system, t=self.t_vec,
                      include_date=True)
 
-        ego_dict = {"grid": self.env.grid,
+        ego_dict = {"grid": torch.clamp(self.env.grid + self.env.gps_grid, 0, 1),
                     "start": self.xref0,
                     "goal": self.xrefN,
                     "args": self.args}

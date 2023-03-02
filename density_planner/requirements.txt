@@ -1,6 +1,6 @@
-absl-py==1.2.0
-cachetools==5.2.0
-casadi==3.5.5
+absl-py
+cachetools
+casadi
 charset-normalizer==2.1.1
 cloudpickle==2.1.0
 colorama==0.4.5
