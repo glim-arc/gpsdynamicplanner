@@ -269,12 +269,15 @@ def pred2grid(x, rho, args, return_gridpos=False):
     num_samples, _ = torch.histogramdd(gridpos.type(torch.FloatTensor), bins=[max_xbin - min_xbin + 1, max_ybin - min_ybin + 1],
                    range=[min_xbin, max_xbin, min_ybin, max_ybin])
     density_sum, _ = torch.histogramdd(gridpos.type(torch.FloatTensor), bins=[max_xbin - min_xbin + 1, max_ybin - min_ybin + 1],
-                   weight=rho[:, 0,0], range=[min_xbin, max_xbin, min_ybin, max_ybin])
+                   weight=rho[:,0,0], range=[min_xbin, max_xbin, min_ybin, max_ybin])
     density_mean = density_sum
     mask = num_samples > 0
     density_mean[mask] /= num_samples[mask]
     grid = torch.zeros((args.grid_size[0], args.grid_size[1], 1))
-    grid[min_xbin:max_xbin+1, min_ybin:max_ybin+1, 0] = density_mean / density_mean.sum()
+    crop = grid[min_xbin:max_xbin+1, min_ybin:max_ybin+1, 0]
+    shape = crop.shape
+    grid[min_xbin:max_xbin + 1, min_ybin:max_ybin+1:, 0] = density_mean[:shape[0], :shape[1]] / density_mean.sum()
+
     if return_gridpos:
         return grid, gridpos
     return grid
