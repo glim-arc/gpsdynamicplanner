@@ -282,7 +282,7 @@ class MotionPlannerGrad(MotionPlanner):
 
     def get_cost_dist_initialize(self, x_traj, rho_traj=None):
         """
-        compute dist for reaching the goal in inilialization process
+        compute distance in inilialization process
         :param x_traj: torch.Tensor
             1 x 4 x N_sim
         :param rho_traj: torch.Tensor
