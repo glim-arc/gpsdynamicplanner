@@ -8,6 +8,12 @@ hyperparameters and settings which can be adapted
 def parse_args():
     parser = argparse.ArgumentParser()
 
+    ### GPS
+    parser.add_argument('--gps_env', type=bool, default=True)
+    parser.add_argument('--gps_env_path', type=str, default="gps_data/parsed_maps/")  # directory for the gps_env
+    parser.add_argument('--gpsgridvisualize', type=bool, default=True)
+
+
     ### SIMULATION
     # simulation parameter
     parser.add_argument('--N_sim', type=int, default=1001)
@@ -102,13 +108,12 @@ def parse_args():
     parser.add_argument('--mp_plot_traj', type=bool, default=True)
     parser.add_argument('--mp_plot_envgrid', type=bool, default=False)
     parser.add_argument('--mp_plot_final', type=bool, default=True)
-    parser.add_argument('--gpsgridvisualize', type=bool, default=True)
     parser.add_argument('--gps_cost', type=bool, default=True)
 
     # other options
-    parser.add_argument('--weight_goal_far', type=float, default=10) #1 if no influence
+    parser.add_argument('--weight_goal_far', type=float, default=5) #1 if no influence
     parser.add_argument('--weight_uref_effort', type=float, default=1e-2) #0 if no influence
-    parser.add_argument('--close2goal_thr', type=float, default=3)
+    parser.add_argument('--close2goal_thr', type=float, default=5)
     parser.add_argument('--mp_video', type=bool, default=False)
     parser.add_argument('--mp_save_results', type=bool, default=True)
     parser.add_argument('--mp_load_old_opt', type=bool, default=False)
@@ -128,19 +133,20 @@ def parse_args():
 
     # optimization with gradient descent
     parser.add_argument('--mp_optimizer', type=str, default="Adam")
-    parser.add_argument('--mp_epochs', type=int, default=100) #100
+    parser.add_argument('--mp_epochs', type=int, default=50) #100
     parser.add_argument('--mp_epochs_density', type=int, default=100) #100
-    parser.add_argument('--mp_numtraj', type=float, default=40) #30
-    parser.add_argument('--mp_lr', type=float, default=1e-2)
+    parser.add_argument('--mp_numtraj', type=float, default=50) #30
+    parser.add_argument('--mp_lr', type=float, default=2e-2)
     parser.add_argument('--mp_lr_step', type=int, default=0)
     parser.add_argument('--max_gradient', type=float, default=0.02)
     # cost parameters
-    parser.add_argument('--weight_goal', type=float, default=1e-2)
-    parser.add_argument('--weight_coll', type=float, default=1e-1)
+    parser.add_argument('--weight_goal', type=float, default=1e1)
+    parser.add_argument('--weight_coll', type=float, default=2e1)
     parser.add_argument('--weight_uref', type=float, default=1e-4)
     parser.add_argument('--weight_bounds', type=float, default=1e1)
-    parser.add_argument('--weight_gps', type=float, default=5e-1)
+    parser.add_argument('--weight_gps', type=float, default=0)
     parser.add_argument('--weight_gps_real', type=float, default=0)
+    parser.add_argument('--weight_dist', type=float, default=0)
 
     # optimization with search
     parser.add_argument('--du_search', type=list, default=[1, 1])
@@ -157,6 +163,12 @@ def parse_args():
     args = parser.parse_args()
     args.grid_size = [int((args.environment_size[1]-args.environment_size[0]) / args.grid_wide)+1,
                       int((args.environment_size[3]-args.environment_size[2]) / args.grid_wide)+1]
+    
+    if args.gps_env == True:
+        args.grid_size = [125,125]
+        args.environment_size = [-6.25,6.25,-6.25,6.25]
+        args.gpsgridvisualize = False
+
     args.size_hidden = [args.number_units] * args.number_layers
     if args.mp_recording >= 18 and args.mp_recording <= 29:
         if args.mp_recording == 18:

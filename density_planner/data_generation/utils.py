@@ -12,6 +12,8 @@ def load_inputmap(dim_x, args):
 
     if args.input_type == "discr10":
         dim_u = 20
+    elif args.input_type == "gps":
+        dim_u = 20
     elif args.input_type == "discr5":
         dim_u = 10
     elif args.input_type == "polyn3":

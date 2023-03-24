@@ -1,17 +1,20 @@
 import hyperparams
 import torch
 import pickle
-from gps_planning.example_objects import create_mp_task
 from gps_planning.utils import initialize_logging, get_cost_table, get_cost_increase
 from gps_planning.MotionPlannerGrad import MotionPlannerGrad
 from gps_planning.MotionPlannerNLP import MotionPlannerNLP, MotionPlannerMPC
 from plots.plot_functions import plot_traj
 import numpy as np
 
-
 if __name__ == '__main__':
     ### load hyperparameters
     args = hyperparams.parse_args()
+
+    if args.gps_env == True:
+        from gps_planning.example_objects_gps import create_mp_task
+    else:
+        from gps_planning.example_objects import create_mp_task
 
     args.device = "cuda" if torch.cuda.is_available() else "cpu"
     # if torch.backends.mps.is_available():

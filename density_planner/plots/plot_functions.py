@@ -392,8 +392,8 @@ def plot_grid(object, args, timestep=None, cmap='binary', name=None,
         grid = object.grid[:, :, timestep]
         if name is None:
             name = object.name
-    x_wide = max(np.abs((args.environment_size[1] - args.environment_size[0])) / 10, 3)
-    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / 10
+    x_wide = max(np.abs((args.environment_size[1] - args.environment_size[0])) / 10, 3) *2
+    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / 10 *2.5
     plt.figure(figsize=(x_wide, y_wide), dpi=200)
     plt.pcolormesh(grid.T, cmap=cmap, norm=None)
     plt.axis('scaled')
@@ -438,8 +438,8 @@ def plot_motion(i, cmap, x_traj, rho_traj, xref_traj, args, grid_env_sc):
     grid_traj[grid_traj != 0] = 256
     grid_all = torch.clamp(grid_env_sc[:, :, i] + grid_traj + grid_pred_sc[:, :, 0], 0, 256)
 
-    x_wide = max(np.abs((args.environment_size[1] - args.environment_size[0])) / 10, 3)
-    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / 10
+    x_wide = max(np.abs((args.environment_size[1] - args.environment_size[0])) / 10, 3) *2
+    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / 10 *2.5
     plt.figure(figsize=(x_wide, y_wide), dpi=200)
     plt.pcolormesh(grid_all.T, cmap=cmap, norm=None)
     plt.axis('scaled')
@@ -491,8 +491,8 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
         div = 6
     else:
         div = 4
-    x_wide = np.abs((args.environment_size[1] - args.environment_size[0])) / div
-    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / div
+    x_wide = np.abs((args.environment_size[1] - args.environment_size[0])) / div *2
+    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / div *2.5
 
     if animate:
         folder = make_path(folder, "GridTraj%d" % traj_idx)
