@@ -2,7 +2,7 @@ import argparse
 import torch
 
 """
-hyperparameters and settings which can be adapted
+hyperparameters and settings which can be adapted with gps planning parameters
 """
 
 def parse_args():
@@ -11,8 +11,8 @@ def parse_args():
     ### GPS
     parser.add_argument('--gps_env', type=bool, default=True)
     parser.add_argument('--gps_env_path', type=str, default="gps_data/parsed_maps/")  # directory for the gps_env
-    parser.add_argument('--gpsgridvisualize', type=bool, default=True)
-
+    parser.add_argument('--gpsgridvisualize', type=bool, default=False)
+    parser.add_argument('--gps_test_case', type=bool, default=True)
 
     ### SIMULATION
     # simulation parameter
@@ -30,7 +30,7 @@ def parse_args():
     parser.add_argument('--size_rawdata', type=int, default=100)
     parser.add_argument('--iterations_rawdata', type=int, default=500)
     parser.add_argument('--bin_number', type=int, default=torch.Tensor([20, 20, 10, 10]).long())
-    #parser.add_argument('--bin_width', type=int, default=0.1) #TO-DO: remove???
+    # parser.add_argument('--bin_width', type=int, default=0.1) #TO-DO: remove???
 
     # processing
     parser.add_argument('--gpus', type=str, default="3")
@@ -38,9 +38,11 @@ def parse_args():
     parser.add_argument('--num_jobs', type=int, default=1)
 
     # data paths
-    parser.add_argument('--path_rawdata', type=str, default="data/rawdata/2022-07-12_discr10_train/")  # directory for the density data
+    parser.add_argument('--path_rawdata', type=str,
+                        default="data/rawdata/2022-07-12_discr10_train/")  # directory for the density data
     parser.add_argument('--path_dataset', type=str, default="data/dataset/")  # directory for the density data
-    parser.add_argument('--path_nn', type=str, default="data/trained_nn/")  # directory for saving and loading the trained NN
+    parser.add_argument('--path_nn', type=str,
+                        default="data/trained_nn/")  # directory for saving and loading the trained NN
     parser.add_argument('--path_traj0', type=str, default="data/initial_traj/")
     parser.add_argument('--path_matlab', type=str, default="data/matlab_env/")
 
@@ -73,26 +75,25 @@ def parse_args():
     # NN parameter
     parser.add_argument('--run_name', type=str, default="all")
     parser.add_argument('--load_pretrained_nn', type=bool, default=False)
-    parser.add_argument('--equation', type=str, default="LE") #LE, FPE_MC, FPE_fourier, FPE_FE
-    parser.add_argument('--batch_size', type=int, default=512) # 256
+    parser.add_argument('--equation', type=str, default="LE")  # LE, FPE_MC, FPE_fourier, FPE_FE
+    parser.add_argument('--batch_size', type=int, default=512)  # 256
     parser.add_argument('--device', type=str, default="cpu")
     parser.add_argument('--nn_type', type=str, default="MLP")
     parser.add_argument('--epochs', type=int, default=200)
     parser.add_argument('--activation', type=str, default="relu")
     parser.add_argument('--number_units', type=int, default=150)
     parser.add_argument('--number_layers', type=int, default=7)
-    parser.add_argument('--optimizer', type=str, default="Adam") # Adam or LFBGS
+    parser.add_argument('--optimizer', type=str, default="Adam")  # Adam or LFBGS
     parser.add_argument('--learning_rate', type=float, default=1e-3)  # 2 e-5
     parser.add_argument('--lr_step', type=int, default=1)
     parser.add_argument('--lr_step_epoch', type=int, default=160)
-    parser.add_argument('--weight_decay', type=float, default=0)  #1e-6 L2 regularization
+    parser.add_argument('--weight_decay', type=float, default=0)  # 1e-6 L2 regularization
 
     # FPE NN
-    parser.add_argument('--fpe_iterations', type=int, default=10000) # 256
+    parser.add_argument('--fpe_iterations', type=int, default=10000)  # 256
 
     # LE NN
     parser.add_argument('--rho_loss_weight', type=float, default=0.001)
-
 
     ### MOTION PLANNING
     # general motion planning options
@@ -111,9 +112,9 @@ def parse_args():
     parser.add_argument('--gps_cost', type=bool, default=True)
 
     # other options
-    parser.add_argument('--weight_goal_far', type=float, default=5) #1 if no influence
-    parser.add_argument('--weight_uref_effort', type=float, default=1e-2) #0 if no influence
-    parser.add_argument('--close2goal_thr', type=float, default=5)
+    parser.add_argument('--weight_goal_far', type=float, default=10)  # 1 if no influence
+    parser.add_argument('--weight_uref_effort', type=float, default=1e-2)  # 0 if no influence
+    parser.add_argument('--close2goal_thr', type=float, default=3)
     parser.add_argument('--mp_video', type=bool, default=False)
     parser.add_argument('--mp_save_results', type=bool, default=True)
     parser.add_argument('--mp_load_old_opt', type=bool, default=False)
@@ -126,27 +127,26 @@ def parse_args():
     # ego vehicle
     parser.add_argument('--mp_gaussians', type=int, default=5)
     parser.add_argument('--mp_sampling', type=str, default='random')
-    parser.add_argument('--mp_sample_size', type=int, default=500) #5000 #if sampling == 'random'
+    parser.add_argument('--mp_sample_size', type=int, default=500)  # 5000 #if sampling == 'random'
     # environment
     parser.add_argument('--environment_size', type=list, default=[-12, 12, -30, 10])
     parser.add_argument('--grid_wide', type=float, default=0.1)
 
     # optimization with gradient descent
     parser.add_argument('--mp_optimizer', type=str, default="Adam")
-    parser.add_argument('--mp_epochs', type=int, default=50) #100
-    parser.add_argument('--mp_epochs_density', type=int, default=100) #100
-    parser.add_argument('--mp_numtraj', type=float, default=50) #30
-    parser.add_argument('--mp_lr', type=float, default=2e-2)
+    parser.add_argument('--mp_epochs', type=int, default=100)  # 100
+    parser.add_argument('--mp_epochs_density', type=int, default=100)  # 100
+    parser.add_argument('--mp_numtraj', type=float, default=40)  # 30
+    parser.add_argument('--mp_lr', type=float, default=1e-2)
     parser.add_argument('--mp_lr_step', type=int, default=0)
     parser.add_argument('--max_gradient', type=float, default=0.02)
     # cost parameters
-    parser.add_argument('--weight_goal', type=float, default=1e1)
-    parser.add_argument('--weight_coll', type=float, default=2e1)
+    parser.add_argument('--weight_goal', type=float, default=1e-2)
+    parser.add_argument('--weight_coll', type=float, default=1e-1)
     parser.add_argument('--weight_uref', type=float, default=1e-4)
     parser.add_argument('--weight_bounds', type=float, default=1e1)
-    parser.add_argument('--weight_gps', type=float, default=0)
+    parser.add_argument('--weight_gps', type=float, default=0e-1)
     parser.add_argument('--weight_gps_real', type=float, default=0)
-    parser.add_argument('--weight_dist', type=float, default=0)
 
     # optimization with search
     parser.add_argument('--du_search', type=list, default=[1, 1])
@@ -155,20 +155,14 @@ def parse_args():
     parser.add_argument('--opt_time_limit', type=float, default=300)
 
     # optimization with NLP
-    parser.add_argument('--iter_NLP', type=int, default=5000) #1000
-    parser.add_argument('--iter_MPC', type=int, default=300) #300 #2000
-    parser.add_argument('--iter_tubeMPC', type=int, default=10) #10 #2000
+    parser.add_argument('--iter_NLP', type=int, default=5000)  # 1000
+    parser.add_argument('--iter_MPC', type=int, default=300)  # 300 #2000
+    parser.add_argument('--iter_tubeMPC', type=int, default=10)  # 10 #2000
     parser.add_argument('--goal_reached_MPC', type=float, default=1)
 
     args = parser.parse_args()
-    args.grid_size = [int((args.environment_size[1]-args.environment_size[0]) / args.grid_wide)+1,
-                      int((args.environment_size[3]-args.environment_size[2]) / args.grid_wide)+1]
-    
-    if args.gps_env == True:
-        args.grid_size = [125,125]
-        args.environment_size = [-6.25,6.25,-6.25,6.25]
-        args.gpsgridvisualize = False
-
+    args.grid_size = [int((args.environment_size[1] - args.environment_size[0]) / args.grid_wide) + 1,
+                      int((args.environment_size[3] - args.environment_size[2]) / args.grid_wide) + 1]
     args.size_hidden = [args.number_units] * args.number_layers
     if args.mp_recording >= 18 and args.mp_recording <= 29:
         if args.mp_recording == 18:
@@ -187,8 +181,8 @@ def parse_args():
         args.mp_realData_spread = 1.5
         args.mp_min_gridSum = 12e5
         print('Not tested yet')
-        #?? args.mp_realData_spread = 1.5
-        #?? args.mp_min_gridSum = 12e5
+        # ?? args.mp_realData_spread = 1.5
+        # ?? args.mp_min_gridSum = 12e5
     else:
         print("Not a valid recording.")
     return args

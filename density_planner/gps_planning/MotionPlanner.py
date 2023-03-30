@@ -17,7 +17,6 @@ class MotionPlanner(ABC):
         self.weight_bounds = ego.args.weight_bounds
         self.weight_coll = ego.args.weight_coll
         self.weight_gps = ego.args.weight_gps
-        self.weight_dist = ego.args.weight_gps
 
         self.plot = ego.args.mp_plot
         if ego.args.mp_plot_final is None:
@@ -91,14 +90,12 @@ class MotionPlanner(ABC):
         cost_bounds, in_bounds = self.get_cost_bounds(x_traj, rho_traj, evaluate=evaluate, get_max=get_max)
         cost_coll = self.get_cost_coll(x_traj, rho_traj, get_max=get_max)  # for xref: 0.044s
         cost_gps = self.get_cost_gps(x_traj, rho_traj, get_max=get_max)
-        cost_gps = self.get_cost_dist(x_traj, rho_traj, get_max=get_max)
 
         cost = self.weight_goal * cost_goal \
                + self.weight_uref * cost_uref \
                + self.weight_bounds * cost_bounds \
                + self.weight_coll * cost_coll \
-               + self.weight_gps * cost_gps \
-               + self.weight_dist * cost_dist
+               + self.weight_gps * cost_gps
 
         cost_dict = {
             "cost_sum": cost,
@@ -106,10 +103,8 @@ class MotionPlanner(ABC):
             "cost_gps": self.weight_gps * cost_gps,
             "cost_goal": self.weight_goal * cost_goal,
             "cost_uref": self.weight_uref * cost_uref,
-            "cost_bounds": self.weight_bounds * cost_bounds,
-            "cost_dist": self.weight_dist * cost_dist
+            "cost_bounds": self.weight_bounds * cost_bounds
         }
-
         return cost, cost_dict
 
     def get_cost_uref(self, uref_traj):
@@ -147,24 +142,7 @@ class MotionPlanner(ABC):
             cost_goal[torch.logical_not(close)] *= self.ego.args.weight_goal_far
         # if rho_traj is not None:
         #     close = torch.all(close)
-        return cost_goal[-1], close
-
-    def get_cost_dist(self, x_traj, rho_traj, evaluate=False, get_max=False):
-        """
-        compute dist for reaching the goal in inilialization process
-        :param x_traj: torch.Tensor
-            1 x 4 x N_sim
-        :param rho_traj: torch.Tensor
-            1 x 1 x N_sim
-        :return: cost: torch.Tensor
-            cost for distance traveled for the trajectory
-        """
-        sq_dist = 0
-
-        for i in range(0, len(x_traj) - 1):
-            sq_dist += (x_traj[i, :2, -1] - x_traj[i + 1, :2, -1]) ** 2
-
-        return sq_dist
+        return cost_goal, close
 
     def get_cost_bounds(self, x_traj, rho_traj, evaluate=False, get_max=False):
         """
