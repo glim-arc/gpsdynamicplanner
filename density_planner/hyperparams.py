@@ -2,7 +2,7 @@ import argparse
 import torch
 
 """
-hyperparameters and settings which can be adapted with gps planning parameters
+hyperparameters and settings planning and cost parameters
 """
 
 def parse_args():
