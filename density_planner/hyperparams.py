@@ -2,7 +2,7 @@ import argparse
 import torch
 
 """
-hyperparameters and settings planning and cost parameters
+hyperparameters for planning and cost parameters
 """
 
 def parse_args():
