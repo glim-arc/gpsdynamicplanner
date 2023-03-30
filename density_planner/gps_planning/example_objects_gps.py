@@ -167,6 +167,10 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     gps_maps_non_gaus = np.array(gps_maps_non_gaus[:101])
     obs_maps_non_gaus = np.array(obs_maps_non_gaus[:101])
 
+    if args.without_gps_map == True:
+        gps_maps = np.zeros_like(gps_maps)
+        gps_maps_non_gaus = np.zeros_like(gps_maps_non_gaus)
+
     gps_maps = torch.FloatTensor(gps_maps).permute(1,2,0)
     obs_maps = torch.FloatTensor(obs_maps).permute(1,2,0)
     gps_maps_non_gaus = torch.FloatTensor(gps_maps_non_gaus).permute(1,2,0)

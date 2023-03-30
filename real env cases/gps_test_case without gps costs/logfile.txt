@@ -1,0 +1,18 @@
+2023-03-30 17:03:21,942 [INFO] 
+2023-03-30 17:03:21,943 [INFO] ###################################################################
+2023-03-30 17:03:21,943 [INFO] ###################################################################
+2023-03-30 17:03:21,943 [INFO] Load GPS environment
+2023-03-30 17:03:22,496 [INFO] Loading Simulated Environment (seed 0)
+2023-03-30 17:03:22,496 [INFO] Start State: [-5.0, -28.0, 1.5, 3.0]
+2023-03-30 17:03:22,496 [INFO] Goal Position: [0.0, 0.0]
+2023-03-30 17:03:22,659 [INFO] 
+2023-03-30 17:03:22,659 [INFO] ##### grad0: Starting motion planning test
+2023-03-30 17:06:04,262 [INFO] grad0: Planning finished in 161.60s
+2023-03-30 17:06:04,262 [INFO] grad0: Final cost coll 0.4183, goal 0.0908, bounds 0.0000, uref 0.4470
+2023-03-30 17:06:39,686 [INFO] grad0: True cost coll 3.2915, goal 0.2078, bounds 0.0000, uref 0.4470
+2023-03-30 17:06:39,686 [INFO] 
+2023-03-30 17:06:39,686 [INFO] ##### %s: Validate trajectory bias: False | grad0
+2023-03-30 17:07:07,462 [INFO] grad0: True cost coll 5.5957, goal 0.2137, bounds 0.0000, uref 0.4470
+2023-03-30 17:07:07,462 [INFO] 
+2023-03-30 17:07:07,462 [INFO] ##### %s: Validate trajectory bias: True | grad0
+2023-03-30 17:07:34,311 [INFO] grad0: True cost coll 0.5327, goal 0.0814, bounds 0.0000, uref 0.4470

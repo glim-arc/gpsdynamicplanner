@@ -1,0 +1,18 @@
+2023-02-23 23:46:51,086 [INFO] 
+2023-02-23 23:46:51,087 [INFO] ###################################################################
+2023-02-23 23:46:51,087 [INFO] ###################################################################
+2023-02-23 23:46:51,087 [INFO] create random environment
+2023-02-23 23:47:30,056 [INFO] Loading Simulated Environment (seed 0)
+2023-02-23 23:47:30,057 [INFO] Start State: [0.0, -25.0, 1.5, 3.0]
+2023-02-23 23:47:30,057 [INFO] Goal Position: [0.0, 8.0]
+2023-02-23 23:47:30,726 [INFO] 
+2023-02-23 23:47:30,726 [INFO] ##### grad0: Starting motion planning test
+2023-02-23 23:50:34,737 [INFO] grad0: Planning finished in 184.01s
+2023-02-23 23:50:34,738 [INFO] grad0: Final cost coll 0.5599, goal 0.6834, bounds 0.0000, uref 0.3531
+2023-02-23 23:52:04,801 [INFO] grad0: True cost coll 23.9443, goal 1.2382, bounds 0.0000, uref 0.3531
+2023-02-23 23:52:04,802 [INFO] 
+2023-02-23 23:52:04,802 [INFO] ##### %s: Validate trajectory bias: False | grad0
+2023-02-23 23:53:36,252 [INFO] grad0: True cost coll 3.9957, goal 0.0875, bounds 0.0000, uref 0.3531
+2023-02-23 23:53:36,252 [INFO] 
+2023-02-23 23:53:36,253 [INFO] ##### %s: Validate trajectory bias: True | grad0
+2023-02-23 23:55:08,868 [INFO] grad0: True cost coll 0.3334, goal 0.8868, bounds 0.0000, uref 0.3531

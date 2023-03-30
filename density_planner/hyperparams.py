@@ -13,6 +13,7 @@ def parse_args():
     parser.add_argument('--gps_env_path', type=str, default="gps_data/parsed_maps/")  # directory for the gps_env
     parser.add_argument('--gpsgridvisualize', type=bool, default=False)
     parser.add_argument('--gps_test_case', type=bool, default=True)
+    parser.add_argument('--without_gps_map', type=bool, default=True)
 
     ### SIMULATION
     # simulation parameter
