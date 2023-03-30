@@ -21,7 +21,6 @@ class MotionPlannerGrad(MotionPlanner):
         self.beta1 = 0.9
         self.beta2 = 0.999
         self.plot_cost = ego.args.mp_plot_cost
-        self.args = self.ego.args
 
     def plan_motion(self):
         """
@@ -82,7 +81,6 @@ class MotionPlannerGrad(MotionPlanner):
         up_best, cost_min = self.find_best()
         up_best = up_best.detach()
         self.best_traj = [up_best, cost_min]
-        print(cost_min)
         return up_best, cost_min
 
     def find_best(self, criterium="cost_sum"):
@@ -209,7 +207,6 @@ class MotionPlannerGrad(MotionPlanner):
         cost_bounds = torch.zeros(uref_traj.shape[0], device=self.device)
         cost_coll = torch.zeros(uref_traj.shape[0], device=self.device)
         cost_gps = torch.zeros(uref_traj.shape[0], device=self.device)
-        cost_dist = self.get_cost_dist_initialize(x_traj)
         if not torch.all(self.check_bounds):
             idx_check = torch.logical_and(goal_reached, torch.logical_not(self.check_bounds))
             if torch.any(idx_check):
@@ -241,8 +238,7 @@ class MotionPlannerGrad(MotionPlanner):
                + self.weight_uref * cost_uref \
                + self.weight_bounds * cost_bounds \
                + self.weight_coll * cost_coll \
-               + self.weight_gps * cost_gps \
-               + self.weight_dist * cost_dist
+               + self.weight_gps * cost_gps
 
         cost_dict = {
             "cost_sum": cost,
@@ -250,8 +246,7 @@ class MotionPlannerGrad(MotionPlanner):
             "cost_gps": self.weight_gps * cost_gps,
             "cost_goal": self.weight_goal * cost_goal,
             "cost_uref": self.weight_uref * cost_uref,
-            "cost_bounds": self.weight_bounds * cost_bounds,
-            "cost_dist": self.weight_dist * cost_dist
+            "cost_bounds": self.weight_bounds * cost_bounds
         }
 
         return cost, cost_dict
@@ -279,28 +274,6 @@ class MotionPlannerGrad(MotionPlanner):
         # if rho_traj is not None:
         #     close = torch.all(close)
         return cost_goal, close
-
-    def get_cost_dist_initialize(self, x_traj, rho_traj=None):
-        """
-        compute distance in inilialization process
-        :param x_traj: torch.Tensor
-            1 x 4 x N_sim
-        :param rho_traj: torch.Tensor
-            1 x 1 x N_sim
-        :return: cost: torch.Tensor
-            cost for distance traveled for the trajectory
-        """
-
-        sq_dist = torch.ones_like(x_traj[:, 0, 0])
-
-        for j in range(0, x_traj.shape[2] - 1):
-            # gridpos_x, gridpos_y = pos2gridpos(self.args, pos_x=[x_traj[:, 0, j]],
-            #                                    pos_y=[x_traj[:, 1, j+1]])
-            a = x_traj[:, :2, j]
-            b = x_traj[:, :2, j+1]
-            sq_dist = sq_dist + ((a - b) ** 2).sum(dim=1)
-
-        return sq_dist
 
     def get_cost_bounds_initialize(self, x_traj):
         """

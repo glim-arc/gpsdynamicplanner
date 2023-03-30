@@ -491,8 +491,8 @@ def plot_traj(ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None
         div = 6
     else:
         div = 4
-    x_wide = np.abs((args.environment_size[1] - args.environment_size[0])) / div *2
-    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / div *2.5
+    x_wide = np.abs((args.environment_size[1] - args.environment_size[0])) / div
+    y_wide = np.abs((args.environment_size[3] - args.environment_size[2])) / div
 
     if animate:
         folder = make_path(folder, "GridTraj%d" % traj_idx)
