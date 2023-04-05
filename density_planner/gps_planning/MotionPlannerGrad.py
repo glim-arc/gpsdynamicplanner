@@ -57,6 +57,26 @@ class MotionPlannerGrad(MotionPlanner):
         cost = self.validate_ref(up)
         return up, cost, t_plan
 
+    def up_datagen(self):
+        """
+        start motion planner: call optimization/planning function and compute cost
+        """
+
+        logging.info("")
+        logging.info("##### %s: Starting motion planning %s" % (self.name, self.ego.args.mp_name))
+        tall = time.time()
+
+        logging.debug("%s: Optimizing %d Random Trajectories without density" % (self.name, self.ego.args.mp_numtraj))
+        t0 = time.time()
+
+        up_best, cost_min = self.find_initial_traj()
+        t_init = time.time() - t0
+        logging.debug("%s: Initilialization finished in %.2fs" % (self.name, t_init))
+        logging.debug("%s: Best Trajectory with cost %.4f:" % (self.name, cost_min))
+        logging.debug(up_best)
+
+        return up_best, cost_min
+
     def find_initial_traj(self):
         """
         initialization procedure: find good guess for the reference trajectory without density predicitons

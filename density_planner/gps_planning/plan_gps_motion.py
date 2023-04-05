@@ -11,7 +11,7 @@ if __name__ == '__main__':
     ### load hyperparameters
     args = hyperparams.parse_args()
 
-    if args.gps_env == True:
+    if args.gps_real_env == True:
         from gps_planning.example_objects_gps import create_mp_task
     else:
         from gps_planning.example_objects import create_mp_task

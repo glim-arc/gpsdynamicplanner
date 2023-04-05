@@ -9,11 +9,19 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     ### GPS
-    parser.add_argument('--gps_env', type=bool, default=True)
-    parser.add_argument('--gps_env_path', type=str, default="gps_data/parsed_maps/")  # directory for the gps_env
+    parser.add_argument('--gps_real_env', type=bool, default=False)
+    parser.add_argument('--gps_real_env_path', type=str, default="gps_data/parsed_maps/")  # directory for the gps_real_env
     parser.add_argument('--gpsgridvisualize', type=bool, default=False)
     parser.add_argument('--gps_test_case', type=bool, default=True)
-    parser.add_argument('--without_gps_map', type=bool, default=True)
+    parser.add_argument('--without_gps_map', type=bool, default=False)
+    parser.add_argument('--gps_cost', type=bool, default=True)
+
+    #mpnet training data generation
+    parser.add_argument('--gps_training_data_generation', type=bool, default=True)
+    parser.add_argument('--gps_training_env_path', type=str, default="mpnet_data/env/")
+    parser.add_argument('--training_env_num', type=int, default=500)
+    parser.add_argument('--training_traj_num', type=int, default=10)
+    parser.add_argument('--trainig_datagen_seed', type=int, default=10)
 
     ### SIMULATION
     # simulation parameter
@@ -98,6 +106,20 @@ def parse_args():
 
     ### MOTION PLANNING
     # general motion planning options
+    # parser.add_argument('--mp_name', type=str, default="test")
+    # parser.add_argument('--mp_setting', type=str, default="gps")
+    # parser.add_argument('--mp_use_realEnv', type=bool, default=False)
+    # parser.add_argument('--mp_stationary', type=bool, default=False)
+    # parser.add_argument('--mp_num_envs', type=int, default=10)
+    # parser.add_argument('--mp_num_initial', type=int, default=1)
+    # parser.add_argument('--mp_recording', type=int, default=26)  # for real-world data: choose 8, 18/26 or 30
+    # parser.add_argument('--mp_plot', type=bool, default=True)
+    # parser.add_argument('--mp_plot_cost', type=bool, default=False)
+    # parser.add_argument('--mp_plot_traj', type=bool, default=True)
+    # parser.add_argument('--mp_plot_envgrid', type=bool, default=False)
+    # parser.add_argument('--mp_plot_final', type=bool, default=True)
+    # parser.add_argument('--gps_cost', type=bool, default=True)
+
     parser.add_argument('--mp_name', type=str, default="test")
     parser.add_argument('--mp_setting', type=str, default="gps")
     parser.add_argument('--mp_use_realEnv', type=bool, default=False)
@@ -107,10 +129,9 @@ def parse_args():
     parser.add_argument('--mp_recording', type=int, default=26)  # for real-world data: choose 8, 18/26 or 30
     parser.add_argument('--mp_plot', type=bool, default=True)
     parser.add_argument('--mp_plot_cost', type=bool, default=False)
-    parser.add_argument('--mp_plot_traj', type=bool, default=True)
+    parser.add_argument('--mp_plot_traj', type=bool, default=False)
     parser.add_argument('--mp_plot_envgrid', type=bool, default=False)
-    parser.add_argument('--mp_plot_final', type=bool, default=True)
-    parser.add_argument('--gps_cost', type=bool, default=True)
+    parser.add_argument('--mp_plot_final', type=bool, default=False)
 
     # other options
     parser.add_argument('--weight_goal_far', type=float, default=10)  # 1 if no influence
@@ -146,7 +167,7 @@ def parse_args():
     parser.add_argument('--weight_coll', type=float, default=1e-1)
     parser.add_argument('--weight_uref', type=float, default=1e-4)
     parser.add_argument('--weight_bounds', type=float, default=1e1)
-    parser.add_argument('--weight_gps', type=float, default=0e-1)
+    parser.add_argument('--weight_gps', type=float, default=1e-1)
     parser.add_argument('--weight_gps_real', type=float, default=0)
 
     # optimization with search

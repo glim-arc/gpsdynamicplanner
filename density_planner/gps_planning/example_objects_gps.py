@@ -69,10 +69,13 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     """
     logging.info("Load GPS environment")
 
-    gpsenvlist = os.listdir(args.gps_env_path)
+    gpsenvlist = os.listdir(args.gps_real_env_path)
 
     obslist = []
     gps_map_list = []
+
+    obslist.sort()
+    gps_map_list.sort()
 
     for i, file in enumerate(gpsenvlist):
         if file[-3:] == "npy":
@@ -92,7 +95,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     shift = 100
 
     for i, map in enumerate(obslist):
-        temp = np.load(args.gps_env_path + "/" + map)
+        temp = np.load(args.gps_real_env_path + "/" + map)
 
         if gps_test_case == True:
             temp = temp.T
@@ -112,7 +115,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
         # plt.show()
 
     for i, map in enumerate(gps_map_list):
-        temp = np.load(args.gps_env_path + "/" + map) / 40
+        temp = np.load(args.gps_real_env_path + "/" + map) / 40
 
         if gps_test_case == True:
             temp = temp.T

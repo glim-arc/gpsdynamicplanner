@@ -8,7 +8,7 @@ import torch
 import logging
 
 
-def create_mp_task(args, seed):
+def create_mp_task(args, seed, env, cur_start_goal):
     """
     function to load the environment and sample the initial state and the goal position
 
@@ -23,18 +23,15 @@ def create_mp_task(args, seed):
     ### create environment and motion planning problem
 
     # generate random environment
-    env = create_environment(args, timestep=100, stationary=args.mp_stationary)
+    env = create_environment(args, env, timestep=100, stationary=args.mp_stationary)
     logging.info("Loading Simulated Environment (seed %d)" % (seed))
 
     # start point
-    xref0 = torch.tensor([0, -25, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
+    start, goal = cur_start_goal
+    xref0 = torch.from_numpy(start).reshape(1, -1, 1).type(torch.FloatTensor)
     # goal point
-    xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
+    xrefN = torch.from_numpy(goal).reshape(1, -1, 1)
 
-    if args.mp_plot_envgrid:
-        plot_grid(env, args, timestep=1, save=True)
-        for t in [1, 20, 40, 60, 80, 100]:
-            plot_grid(env, args, timestep=t, save=False)
     logging.info("Start State: [%.1f, %.1f, %.1f, %.1f]" % (xref0[0, 0, 0], xref0[0, 1, 0], xref0[0, 2, 0], xref0[0, 3, 0]))
     logging.info("Goal Position: [%.1f, %.1f]" % (xrefN[0, 0, 0], xrefN[0, 1, 0]))
 
@@ -43,7 +40,7 @@ def create_mp_task(args, seed):
     return ego
 
 
-def create_environment(args, object_str_list=None, name="environment", timestep=0, stationary=False):
+def create_environment(args, env, object_str_list=None, name="environment", timestep=0, stationary=False):
     """
     create random environment
 
@@ -54,42 +51,20 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     :param stationary:      True if environment contains only stationary obstacles
     :return: environment
     """
-    logging.info("create random environment")
-
-
-    wide = 3
-    height = 8
-    obs1 = np.array([-3, -3 + wide, 0,0 + height, 1, 1])
-    obs2 = np.array([-3, -3 + wide, -12, -12 + height, 1, 1])
-    obs3 = np.array([3, 3 + wide, 0, 0 + height, 1, 1])
-    obs4 = np.array([3, 3 + wide, -12, -12 + height, 1, 1])
-    obs5 = np.array([0, 0 + wide, -20, -20 + height/2, 1, 1])
-
-    obslist = [obs1, obs2, obs3, obs4, obs5]
-    # gps_growthrates = [0.05, 0, 0.05, 0, 0]
-    # gps_meanvel = [0.05, 0, -0.05, 0, 0]
-
-    #both_stationary
-    gps_growthrates = [0.08, 0, 0.08, 0, 0]
-    gps_meanvel = [0, 0, 0, 0, 0]
-
-    #one side
-    # gps_growthrates = [0, 0, -0.05, 0, 0]
-    # gps_meanvel = [0, 0, 0.3, 0, 0]
-
-    # one side static
-    gps_growthrates = [0, 0, 0, 0, 0]
-    gps_meanvel = [0, 0, 0, 0, 0]
+    logging.info("create training environment")
 
     objects = []
+    obslist = env
 
     for i in range(len(obslist)):
-        obs = obslist[i]
-        obj = StaticObstacle(args, name="staticObs%d" % i, coord=obs, isgps = True)
-        map = DynamicObstacle(args, name="gpsmaps%d" % i, coord=obs, velocity_x=gps_meanvel[i],gps_growthrate=gps_growthrates[i], isgps = True)
+        obs, gps_dynamics = obslist[i]
+        map = DynamicObstacle(args, name="gpsmaps%d" % i, coord=obs, velocity_x=gps_dynamics[1],
+                              velocity_y=gps_dynamics[2],
+                              gps_growthrate=gps_dynamics[0], isgps=True)
         objects.append(map)
 
-    environment = Environment(objects, args, name=name)
+    environment = Environment(objects, args)
+
     if timestep > 0:
         environment.forward_occupancy(step_size=timestep)
     return environment

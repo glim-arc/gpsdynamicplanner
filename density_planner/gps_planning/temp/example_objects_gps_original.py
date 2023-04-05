@@ -54,7 +54,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     """
     logging.info("create random environment")
 
-    gpsenvlist = os.listdir(args.gps_env_path)
+    gpsenvlist = os.listdir(args.gps_real_env_path)
 
     obslist = []
     gps_map_list = []
@@ -75,7 +75,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
     gps_discount = 0.7
 
     for i, map in enumerate(obslist):
-        temp = np.load(args.gps_env_path + "/" + map)
+        temp = np.load(args.gps_real_env_path + "/" + map)
 
         # apply gaussian
         temp_gaus = gaussian_filter(temp * discount, sigma=spread)
@@ -87,7 +87,7 @@ def create_environment(args, object_str_list=None, name="environment", timestep=
         # plt.show()
 
     for i, map in enumerate(gps_map_list):
-        temp = np.load(args.gps_env_path + "/" + map)/40
+        temp = np.load(args.gps_real_env_path + "/" + map)/40
         # filter = obs_maps_non_gaus[i] >0
         # temp[filter] = 0
 

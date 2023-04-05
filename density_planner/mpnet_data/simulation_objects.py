@@ -2,12 +2,10 @@ import numpy as np
 import torch
 from gps_planning.utils import pos2gridpos, traj2grid, shift_array, \
     pred2grid, get_mesh_sample_points, sample_pdf, enlarge_grid, compute_gradient, make_path
-from density_training.utils import load_nn, get_nn_prediction
 from data_generation.utils import load_inputmap, load_outputmap
 from plots.plot_functions import plot_ref, plot_grid, plot_traj
 from matplotlib import cm
 from matplotlib.colors import ListedColormap
-from systems.sytem_CAR import Car
 import matplotlib.pyplot as plt
 from scipy.ndimage import gaussian_filter
 
@@ -36,7 +34,6 @@ class Environment:
         self.gps_grid_gradientY = None
         self.args = args
         self.update_grid()
-
 
     def update_grid(self):
         """
@@ -211,7 +208,7 @@ class StaticObstacle:
         self.gps_grid.to(self.device)
         self.bounds = [None for _ in range(timestep + 1)]
         self.occupancies = []
-        self.base_sigma = 7
+        self.base_sigma = 1
 
         self.basenum = int(name[-1:])
         if self.basenum == 0 or self.basenum == 2:
@@ -259,15 +256,9 @@ class StaticObstacle:
         sigmaval = self.base_sigma
         gupdatedgrid = gaussian_filter(samplegrid * 1.5, sigma=sigmaval)
         gpsmap = torch.FloatTensor(gupdatedgrid)
-        gpsmap = torch.clamp(gpsmap, 0, 1)
+        self.sum = 1
+        gpsmap = torch.clamp(gpsmap / self.sum, 0, 1)
 
-        # gaussian dist for grid
-        samplegrid = np.array(self.grid[:, :, self.current_timestep], copy=True)
-        gupdatedgrid = gaussian_filter(samplegrid, sigma=sigmaval)
-        new_grid = torch.FloatTensor(gupdatedgrid)
-        new_grid = torch.clamp(new_grid, 0, 1)
-
-        self.grid[:, :, self.current_timestep] = new_grid
         self.gps_grid[:, :, self.current_timestep] = gpsmap
 
     def forward_occupancy(self, step_size=1):
@@ -293,7 +284,7 @@ class DynamicObstacle(StaticObstacle):
     Dynamic object with occupancy map, with gps
     """
 
-    def __init__(self, args, coord, name="dynamicObstacle", timestep=0, velocity_x=0, velocity_y=0, gps_growthrate=0, isgps = True):
+    def __init__(self, args, coord, name="dynamicObstacle", timestep=0, velocity_x=0,velocity_y=0, gps_growthrate=0, isgps = True):
         """
         initialize object
 
@@ -358,15 +349,8 @@ class DynamicObstacle(StaticObstacle):
         sigmaval = self.base_sigma
         gupdatedgrid = gaussian_filter(samplegrid * 1.5, sigma=sigmaval)
         gpsmap = torch.FloatTensor(gupdatedgrid)
-        gpsmap = torch.clamp(gpsmap, 0, 1)
-
-        # gaussian dist for grid
-        samplegrid = np.array(self.grid[:, :, self.current_timestep], copy=True)
-        gupdatedgrid = gaussian_filter(samplegrid, sigma=sigmaval)
-        new_grid = torch.FloatTensor(gupdatedgrid)
-        new_grid = torch.clamp(new_grid, 0, 1)
-
-        self.grid[:, :, self.current_timestep] = new_grid
+        self.sum = 1
+        gpsmap = torch.clamp(gpsmap / self.sum, 0, 1)
 
         if self.onesidegrow and self.basenum == self.targetbase:
             gpsmap = self.gps_shift_array(iter=-1, grid=samplegrid, step_x=self.velocity_x, step_y=0, fill=0)
@@ -377,6 +361,8 @@ class DynamicObstacle(StaticObstacle):
 
         # plt.imshow(np.rot90(self.gps_grid[:, :, self.current_timestep].numpy(), 1))
         # plt.show()
+
+        self.gps_grid.to(self.device)
 
     def forward_occupancy(self, step_size=1):
         """
@@ -428,7 +414,7 @@ class DynamicObstacle(StaticObstacle):
         gupdatedgrid = gaussian_filter(samplegrid * 1.5, sigma=sigmaval)
         gpsmap = torch.FloatTensor(gupdatedgrid)
 
-        gpsmap = torch.clamp(gpsmap, 0, 1)
+        gpsmap = torch.clamp(gpsmap/self.sum, 0, 1)
 
         if self.onesidegrow and self.basenum == self.targetbase:
             step_x = int(self.x_offset*10)
@@ -462,228 +448,3 @@ class DynamicObstacle(StaticObstacle):
 
         result_new.to(self.device)
         return result_new
-
-
-class EgoVehicle:
-    """
-    class for the ego vehicle which contains all information for the motion planning task
-    """
-
-    def __init__(self, xref0, xrefN, env, args, pdf0=None, name="egoVehicle", video=False):
-        self.device = env.device
-        self.xref0 = xref0
-        self.xrefN = xrefN
-        self.system = Car()
-        self.name = name
-        self.env = env
-        self.args = args
-        self.video = video
-        if pdf0 is None:
-            pdf0 = sample_pdf(self.system, args.mp_gaussians)
-        self.initialize_predictor(pdf0)
-        self.env.get_gradient()
-
-    def initialize_predictor(self, pdf0):
-        """
-        sample initial states from the initial density distribution
-
-        :param pdf0:    initial density distribution
-        """
-        self.model = self.load_predictor(self.system.DIM_X)
-        if self.args.mp_sampling == 'random':
-            xe0 = torch.rand(self.args.mp_sample_size, self.system.DIM_X, 1) * (
-                    self.system.XE0_MAX - self.system.XE0_MIN) + self.system.XE0_MIN
-        else:
-            _, xe0 = get_mesh_sample_points(self.system, self.args)
-            xe0 = xe0.unsqueeze(-1)
-        rho0 = pdf0(xe0)
-        mask = rho0 > 0
-        self.xe0 = xe0[mask, :, :]
-        self.rho0 = (rho0[mask] / rho0.sum()).reshape(-1, 1, 1)
-
-    def load_predictor(self, dim_x):
-        """
-        load the density NN
-
-        :param dim_x: dimensionaliy of the state
-        :return: model of the NN
-        """
-        _, num_inputs = load_inputmap(dim_x, self.args)
-        _, num_outputs = load_outputmap(dim_x)
-        model, _ = load_nn(num_inputs, num_outputs, self.args, load_pretrained=True)
-        model.eval()
-        return model
-
-    def predict_density(self, up, xref_traj, use_nn=True, xe0=None, rho0=None, compute_density=True):
-        """
-        predict the state and denisty trajectories
-
-        :param up:              parameters of the reference trajectory
-        :param xref_traj:       reference trajectory
-        :param use_nn:          True if density NN is used for the predictions, otherwise LE
-        :param xe0:             initial deviations of the reference trajectory
-        :param rho0:            initial density values
-        :param compute_density: True if density should be computed, otherwise just computation of the state trajectories
-        :return: state and density trajectories
-        """
-        if xe0 is None:
-            xe0 = self.xe0
-        if rho0 is None:
-            rho0 = self.rho0
-            assert rho0.shape[0] == xe0.shape[0]
-
-        if self.args.input_type == "discr10" and up.shape[2] != 10:
-            N_sim = up.shape[2] * (self.args.N_sim_max // 10) + 1
-            up = torch.cat((up, torch.zeros(up.shape[0], up.shape[1], 10 - up.shape[2])), dim=2, device=self.device)
-        elif self.args.input_type == "discr5" and up.shape[2] != 5:
-            N_sim = up.shape[2] * (self.args.N_sim_max // 5) + 1
-            up = torch.cat((up, torch.zeros(up.shape[0], up.shape[1], 5 - up.shape[2])), dim=2, device=self.device)
-        else:
-            N_sim = self.args.N_sim
-
-        if use_nn: # approximate with density NN
-            xe_traj = torch.zeros(xe0.shape[0], xref_traj.shape[1], xref_traj.shape[2], device=self.device)
-            rho_log_unnorm = torch.zeros(xe0.shape[0], 1, xref_traj.shape[2], device=self.device)
-            t_vec = torch.arange(0, self.args.dt_sim * N_sim - 0.001, self.args.dt_sim * self.args.factor_pred)
-
-            # 2. predict x(t) and rho(t) for times t
-            for idx, t in enumerate(t_vec):
-                xe_traj[:,:, [idx]], rho_log_unnorm[:, :, [idx]] = get_nn_prediction(self.model, xe0[:, :, 0], self.xref0[0, :, 0], t, up, self.args)
-        else: # use LE
-            uref_traj, _ = self.system.sample_uref_traj(self.args, up=up)
-            xref_traj_long = self.system.compute_xref_traj(self.xref0, uref_traj, self.args)
-            xe_traj_long, rho_log_unnorm = self.system.compute_density(xe0, xref_traj_long, uref_traj, self.args.dt_sim,
-                                                   cutting=False, log_density=True, compute_density=True)
-            xe_traj = xe_traj_long[:, :, ::self.args.factor_pred]
-
-        if compute_density:
-            rho_max, _ = rho_log_unnorm.max(dim=0)
-            rho_unnorm = torch.exp(rho_log_unnorm - rho_max.unsqueeze(0)) * rho0.reshape(-1, 1, 1)
-            rho_traj = rho_unnorm / rho_unnorm.sum(dim=0).unsqueeze(0)
-            rho_traj = rho_traj #+ rho0.reshape(-1, 1, 1)
-        else:
-            rho_traj = None
-
-        x_traj = xe_traj + xref_traj
-        return x_traj, rho_traj
-
-    def visualize_xref(self, xref_traj, uref_traj=None, show=True, save=False, include_date=True,
-                       name='Reference Trajectory', folder=None, x_traj=None):
-        """
-        plot the reference trajectory in the occupation map of the environment
-
-        :param xref_traj:   reference state trajectory
-        :param uref_traj:   reference input trajectory
-        :param show:        True if plot should be shown
-        :param save:        True if plot should be saved
-        :param include_date:True if filename includes the date
-        :param name:        name for the plot
-        :param folder:      folder where the plot should be saved
-        """
-
-        if uref_traj is not None:
-            plot_ref(xref_traj, uref_traj, 'Reference Trajectory', self.args, self.system, t=self.t_vec,
-                     include_date=True)
-
-        ego_dict = {"grid": torch.clamp(self.env.grid + self.env.gps_grid, 0, 1),
-                    "start": self.xref0,
-                    "goal": self.xrefN,
-                    "args": self.args}
-        if x_traj is not None:
-            mp_methods = ["sys", "ref"]
-            mp_results = {"sys": {"x_traj": [x_traj]}, "ref": {"x_traj": [xref_traj]}}
-        else:
-            mp_methods = ["ref"]
-            mp_results = {"ref": {"x_traj": [xref_traj]}}
-
-        plot_traj(ego_dict, mp_results, mp_methods, self.args, folder=folder, traj_idx=0, animate=False,
-                  include_density=False, name=name)
-
-    def animate_traj(self, folder, xref_traj, x_traj=None, rho_traj=None):
-        """
-        plot the density and the states in the occupation map for each point in time
-
-        :param folder:      name of the folder for saving the plots
-        :param xref_traj:   reference state trajectory
-        :param x_traj:      state trajectories
-        :param rho_traj:    density trajectories
-        """
-
-        if x_traj is None:
-            x_traj = xref_traj
-        if rho_traj is None:
-            rho_traj = torch.ones(x_traj.shape[0], 1, x_traj.shape[2]) / x_traj.shape[0]  # assume equal density
-
-        # create colormap
-        greys = cm.get_cmap('Greys')
-        grey_col = greys(range(0, 256))
-        greens = cm.get_cmap('Greens')
-        green_col = greens(range(0, 256))
-        blue = np.array([[0.212395, 0.359683, 0.55171, 1.]])
-        # yellow = np.array([[0.993248, 0.906157, 0.143936, 1.      ]])
-        colorarray = np.concatenate((grey_col[::2, :], green_col[::2, :], blue))
-        cmap = ListedColormap(colorarray)
-
-        if self.env.custom_cost == False:
-            grid_env_sc = 127 * self.env.grid.clone().detach()
-        else:
-            grid_env_sc = torch.clamp(self.env.grid + self.env.gps_grid, 0, 1)
-            grid_env_sc = 127 * grid_env_sc.clone().detach()
-
-        for i in range(xref_traj.shape[2]):
-            with torch.no_grad():
-                # 3. compute marginalized density grid
-                grid_pred = pred2grid(x_traj[:, :, [i]], rho_traj[:, :, [i]], self.args, return_gridpos=False)
-
-            grid_pred_sc = 127 * torch.clamp(grid_pred/grid_pred.max(), 0, 1)
-            grid_pred_sc[grid_pred_sc != 0] += 128
-            grid_traj = traj2grid(xref_traj[:, :, :i + 1], self.args)
-            grid_traj[grid_traj != 0] = 256
-            grid_all = torch.clamp(grid_env_sc[:, :, i] + grid_traj + grid_pred_sc[:, :, 0], 0, 256)
-            plot_grid(grid_all, self.args, name="iter%d" % i, cmap=cmap, show=False, save=True, folder=folder)
-
-    def animate_trajs(self, folder, xref_traj, x_traj=None, rho_traj=None):
-        """
-        plot the density and the states in the occupation map for each point in time
-
-        :param folder:      name of the folder for saving the plots
-        :param xref_traj:   reference state trajectory
-        :param x_traj:      state trajectories
-        :param rho_traj:    density trajectories
-        """
-
-        if x_traj is None:
-            x_traj = xref_traj
-        if rho_traj is None:
-            rho_traj = torch.ones(x_traj.shape[0], 1, x_traj.shape[2]) / x_traj.shape[0]  # assume equal density
-
-        # create colormap
-        greys = cm.get_cmap('Greys')
-        grey_col = greys(range(0, 256))
-        greens = cm.get_cmap('Greens')
-        green_col = greens(range(0, 256))
-        blue = np.array([[0.212395, 0.359683, 0.55171, 1.]])
-        # yellow = np.array([[0.993248, 0.906157, 0.143936, 1.      ]])
-        colorarray = np.concatenate((grey_col[::2, :], green_col[::2, :], blue))
-        cmap = ListedColormap(colorarray)
-
-        if self.env.custom_cost == False:
-            grid_env_sc = 127 * self.env.grid.clone().detach()
-        else:
-            grid_env_sc = torch.clamp(self.env.grid + self.env.gps_grid, 0, 1)
-            grid_env_sc = 127 * grid_env_sc.clone().detach()
-
-        for i in range(xref_traj.shape[2]):
-            with torch.no_grad():
-                # 3. compute marginalized density grid
-                grid_pred = pred2grid(x_traj[:, :, [i]], rho_traj[:, :, [i]], self.args, return_gridpos=False)
-
-            grid_pred_sc = 127 * torch.clamp(grid_pred/grid_pred.max(), 0, 1)
-            grid_pred_sc[grid_pred_sc != 0] += 128
-            grid_traj = traj2grid(xref_traj[:, :, :i + 1], self.args)
-            grid_traj[grid_traj != 0] = 256
-            grid_all = torch.clamp(grid_env_sc[:, :, i] + grid_traj + grid_pred_sc[:, :, 0], 0, 256)
-            plot_grid(grid_all, self.args, name="iter%d" % i, cmap=cmap, show=False, save=True, folder=folder)
-
-    def set_start_grid(self):
-        self.grid = pred2grid(self.xref0 + self.xe0, self.rho0, self.args)

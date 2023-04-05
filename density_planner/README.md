@@ -8,6 +8,13 @@ Official Code for "Density Planner: Minimizing Collision Risk in Motion Planning
 python -m gps_planning.plan_gps_motion --mp_setting gps
 ```
 
+2. MPNET
+training obs
+
+```bash
+python -m MPNet.AE.CAE_obs
+```
+
 for cluster
 conda install -c conda-forge texlive-core
 
