@@ -159,13 +159,12 @@ def main(args):
 
 	print("load env ")
 	for env_num in range(args.total_env_num - 100):
+		print("env ", env_num)
 		# load environment
 		env_grid = load_env(env_num).permute(2, 0, 1).to(device)
 
 		for i in range(10):
 			env_list[env_num][0][i] = env_grid[i * 10]
-
-		env_list[env_num] = env_grid
 
 	dataset = TensorDataset(env_list)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
