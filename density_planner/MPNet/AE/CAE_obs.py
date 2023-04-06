@@ -8,6 +8,7 @@ import numpy as np
 import hyperparams
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
+import matplotlib.pyplot as plt
 
 #https://medium.com/dataseries/convolutional-autoencoder-in-pytorch-on-mnist-dataset-d65145c132ac
 
@@ -199,26 +200,29 @@ def main(args):
 
 		print ("--average loss:")
 		print (avg_loss/args.batch_size)
-		avg_loss_list.append(avg_loss/args.batch_size)
+		avg_loss_list.append(avg_loss.cpu().numpy()/args.batch_size)
 
 	print("validation starts")
 	env_list = torch.zeros((args.total_env_num - 100, 1, 1, 241, 401)).to(device)
 
+	idx = 0
 	for env_num in range(args.total_env_num - 100, args.total_env_num):
 		# load environment
 		print("load env " + str(env_num))
 		env_grid = load_env(env_num).permute(2, 0, 1).unsqueeze(dim=0).to(device)
-		env_list[env_num] = env_grid
+		env_list[idx] = env_grid
+		idx += 1
 	print("Env loaded")
 
 	avg_loss=0
-	for i in range(args.total_env_num-100, args.total_env_num, args.batch_size):
+	start_val_env = args.total_env_num-100
+	for i in range(start_val_env, args.total_env_num, args.batch_size):
 		optimizer.zero_grad()
 		decoder.zero_grad()
 		encoder.zero_grad()
 
 		# ===================forward=====================
-		cur_grid_batch = env_list[i]
+		cur_grid_batch = env_list[i-start_val_env]
 		latent_space = encoder(cur_grid_batch)
 		output = decoder(latent_space)
 		keys = encoder.state_dict().keys()
@@ -230,19 +234,23 @@ def main(args):
 	print ("--Validation average loss:")
 	print (avg_loss/100)
 
+	avg_loss_list = np.array(avg_loss_list)
+	val_loss = np.array(avg_loss.cpu().numpy()/100)
+
 	torch.save(encoder.state_dict(), os.path.join(args.model_path,'cae_obs_encoder.model'))
 	torch.save(decoder.state_dict(),os.path.join(args.model_path,'cae_obsdecoder.model'))
-	np.save(os.path.join(args.model_path,'avg_loss_list.npy'), avg_loss_list.numpy())
+	np.save(os.path.join(args.model_path,'avg_loss_list.npy'), avg_loss_list)
+	np.save(os.path.join(args.model_path,'val_loss.npy'), val_loss)
 
-	plt.figure()
-	epoch = np.arange(1, len(avg_loss_list) + 1)
-	plt.plot(epoch, avg_loss_list)
-	# plt.legend(["30 Ep", "60 Ep", "100 Ep"])
-	plt.ylabel('Average Loss')
-	plt.xlabel('Epoch')
-	plt.title('CAE Average Loss with validation average loss of ' + str(avg_loss[0]))
-	plt.savefig(os.path.join(args.model_path,'avg_loss_list.jpg'), dpi=200)
-	plt.show()
+	# plt.figure()
+	# epoch = np.arange(1, len(avg_loss_list) + 1)
+	# plt.plot(epoch, avg_loss_list)
+	# # plt.legend(["30 Ep", "60 Ep", "100 Ep"])
+	# plt.ylabel('Average Loss')
+	# plt.xlabel('Epoch')
+	# plt.title('CAE Average Loss with validation average loss of ' + str(avg_loss.item()/100))
+	# plt.savefig(os.path.join(args.model_path,'avg_loss_list.jpg'), dpi=200)
+	# plt.show()
 
 def test(args):
 	env_list = torch.zeros((10,1,241,401))
@@ -295,7 +303,7 @@ if __name__ == '__main__':
 	parser.add_argument('--training_traj_num', type=int, default=10)
 	parser.add_argument('--model_path', type=str, default='./mpnet_data/models/',help='path for saving trained models')
 	parser.add_argument('--num_epochs', type=int, default=800)
-	parser.add_argument('--batch_size', type=int, default=80)
+	parser.add_argument('--batch_size', type=int, default=100)
 	parser.add_argument('--learning_rate', type=float, default=0.001)
 	args = parser.parse_args()
 	#test(args)
