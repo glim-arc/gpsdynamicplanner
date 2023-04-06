@@ -8,6 +8,7 @@ import hyperparams
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+import torchvision.transforms.functional as TF
 
 #https://medium.com/dataseries/convolutional-autoencoder-in-pytorch-on-mnist-dataset-d65145c132ac
 
@@ -17,40 +18,37 @@ class Encoder(nn.Module):
 		# convolutional layer
 		self.encoder = nn.Sequential(
 			# convolutional layer
-			# nn.MaxPool3d(kernel_size=2, stride=2),
+			nn.MaxPool3d(kernel_size=2, stride=2),
 			nn.Conv3d(1, 8, 2, stride=2, padding=1),
 			nn.PReLU(),
 			nn.Conv3d(8, 16, 2, stride=2, padding=1),
 			nn.BatchNorm3d(16),
 			nn.PReLU(),
-			nn.Conv3d(16, 32, 2, stride=2, padding=0),
-			nn.PReLU(),
 
 			nn.Flatten(start_dim=1),
 
 			# linear layer
-			nn.Linear(32*13*30*50, 10240), nn.PReLU(), nn.Linear(10240, 4096), nn.PReLU(), nn.Linear(4096, 2048),
-			nn.PReLU(), nn.Linear(2048, 1024), nn.PReLU(), nn.Linear(1024, 512)
+			nn.Linear(16 * 2 * 16 * 26, 10240), nn.PReLU(), nn.Linear(10240, 4096), nn.PReLU(), nn.Linear(4096, 2048),
+			nn.PReLU(),
+			nn.Linear(2048, 1024), nn.PReLU(), nn.Linear(1024, 512)
 		)
 
 		# #convolutional layer #1*240*400
 		# self.conv = self.encoder_cnn = nn.Sequential(
 		# 	#1*101*240*400
-		# 	# nn.MaxPool3d(kernel_size=2, stride=2),
+		# 	nn.MaxPool3d(kernel_size=2, stride=2),
 		# 	nn.Conv3d(1, 8, 2, stride=2, padding=1),
 		# 	nn.PReLU(),
 		# 	nn.Conv3d(8, 16, 2, stride=2, padding=1),
 		# 	nn.BatchNorm3d(16),
 		# 	nn.PReLU(),
-		# 	nn.Conv3d(16, 32, 2, stride=2, padding=0),
-		# 	nn.PReLU()
-		# ) #32*4*13*23, 32*13*30*50
+		# ) #32*1*8*13
 		#
 		# #flatten
 		# self.flatten = nn.Flatten(start_dim=1)
 		#
 		# #linear
-		# self.lin = nn.Sequential(nn.Linear(32*13*30*50, 10240),nn.PReLU(),nn.Linear(10240, 4096),nn.PReLU(),nn.Linear(4096, 2048),nn.PReLU(),
+		# self.lin = nn.Sequential(nn.Linear(16*2*16*26, 10240),nn.PReLU(),nn.Linear(10240, 4096),nn.PReLU(),nn.Linear(4096, 2048),nn.PReLU(),
 		# 						 nn.Linear(2048, 1024),nn.PReLU(),nn.Linear(1024, 512))
 
 	def forward(self, x):
@@ -67,23 +65,20 @@ class Decoder(nn.Module):
 		self.decoder = nn.Sequential(
 			#linear layer
 			nn.Linear(512, 1024),nn.PReLU(),nn.Linear(1024, 2048),nn.PReLU(),nn.Linear(2048, 4096),nn.PReLU(),nn.Linear(4096, 10240),
-			nn.PReLU(), nn.Linear(10240, 32*13*30*50), nn.PReLU(),
+			nn.PReLU(), nn.Linear(10240, 16*2*16*26), nn.PReLU(),
 
 			#flatten
-			nn.Unflatten(dim=1, unflattened_size=(32,13,30,50)),
+			nn.Unflatten(dim=1, unflattened_size=(16,2,16,26)),
 
 			#de-convolutional layer
-			nn.ConvTranspose3d(32, 16, 2,
-							   stride=2, output_padding=0),
-			nn.BatchNorm3d(16),
-			nn.PReLU(),
 			nn.ConvTranspose3d(16, 8, 2, stride=2,
 							   padding=1, output_padding=1),
+			nn.BatchNorm3d(8),
 			nn.PReLU(),
 			nn.ConvTranspose3d(8, 1, 2, stride=2,
 							   padding=1, output_padding=0),
 			nn.PReLU(),
-			nn.Upsample(size=(10, 241, 401))
+			nn.Upsample(size=(10, 120, 200))
 		)
 
 	def forward(self, x):
@@ -155,16 +150,18 @@ def main(args):
 	if not os.path.exists(args.model_path):
 		os.makedirs(args.model_path)
 
-	env_list = torch.ones((args.total_env_num - 100, 1, 10, 241, 401)).to(device)
+	discrete_time = 10
+	env_list = torch.ones((args.total_env_num - validation_env_num, 1, discrete_time, 120, 200)).to(device)
 
 	print("load env ")
-	for env_num in range(args.total_env_num - 100):
+	for env_num in range(args.total_env_num - validation_env_num):
 		print("env ", env_num)
 		# load environment
 		env_grid = load_env(env_num).permute(2, 0, 1).to(device)
+		env_grid = TF.resize(env_grid, (120 * 200))
 
 		for i in range(10):
-			env_list[env_num][0][i] = env_grid[i * 10]
+			env_list[env_num][0][i] = env_grid[i * discrete_time]
 
 	dataset = TensorDataset(env_list)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
@@ -186,7 +183,7 @@ def main(args):
 			output = decoder(latent_space)
 			keys = encoder.state_dict().keys()
 			W = encoder.state_dict()[
-				'encoder.17.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
+				'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
 			loss = loss_function(W, cur_grid_batch, output, latent_space)
 			avg_loss = avg_loss + loss.data
 			# ===================backward====================
@@ -198,13 +195,14 @@ def main(args):
 		avg_loss_list.append(avg_loss.cpu().numpy()/args.batch_size)
 
 	print("validation starts")
-	env_list = torch.zeros((args.total_env_num - 100, 1, 1, 241, 401)).to(device)
+	env_list = torch.ones((validation_env_num, 1, discrete_time, 120, 200)).to(device)
 
 	idx = 0
-	for env_num in range(args.total_env_num - 100, args.total_env_num):
+	for env_num in range(args.total_env_num - validation_env_num, args.total_env_num):
 		# load environment
 		print("load env " + str(env_num))
 		env_grid = load_env(env_num).permute(2, 0, 1).to(device)
+		env_grid = TF.resize(env_grid, (120*200))
 
 		for i in range(10):
 			env_list[idx][0][i] = env_grid[i * 10]
@@ -225,7 +223,7 @@ def main(args):
 		output = decoder(latent_space)
 		keys = encoder.state_dict().keys()
 		W = encoder.state_dict()[
-			'encoder.17.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
+			'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
 		loss = loss_function(W, cur_grid_batch, output, latent_space)
 		avg_loss = avg_loss + loss.data
 
@@ -251,24 +249,29 @@ def main(args):
 	# plt.show()
 
 def test(args):
+	encoder = Encoder()
+	decoder = Decoder()
+
 	device = "cpu"
 	total = 4
-	env_list = torch.ones((total,1, 101, 241, 401)).to(device)
+	discrete_time = 10
+	env_list = torch.ones((total,1, discrete_time, 120, 200)).to(device)
 
 	print("load env ")
 	for env_num in range(total):
 		# load environment
-		env_grid = load_env(env_num).permute(2, 0, 1).unsqueeze(dim=0).to(device)
-		env_list[env_num] = env_grid
+		print(env_num)
+		env_grid = load_env(env_num).permute(2, 0, 1)
+		env_grid = TF.resize(env_grid, (120, 200)).to(device)
+
+		for i in range(discrete_time):
+			env_list[env_num][0][i] = env_grid[i * discrete_time]
 
 	dataset = TensorDataset(env_list)
 	dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
 
 	for batch_idx, samples in enumerate(dataloader):
 		cur_grid_batch = samples[0]
-
-		encoder = Encoder()
-		decoder = Decoder()
 
 		params = list(encoder.parameters()) + list(decoder.parameters())
 		optimizer = torch.optim.Adam(params, lr =args.learning_rate)
@@ -282,7 +285,7 @@ def test(args):
 		output = decoder(latent_space)
 		keys = encoder.state_dict().keys()
 		W = encoder.state_dict()[
-			'encoder.17.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
+			'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
 		loss = loss_function(W, cur_grid_batch, output, latent_space)
 		avg_loss = avg_loss + loss.data
 		# ===================backward====================
@@ -296,8 +299,9 @@ if __name__ == '__main__':
 	# mpnet training data generation
 	parser.add_argument('--gps_training_data_generation', type=bool, default=True)
 	parser.add_argument('--gps_training_env_path', type=str, default="mpnet_data/env/")
-	parser.add_argument('--total_env_num', type=int, default=100)
-	parser.add_argument('--training_traj_num', type=int, default=10)
+	parser.add_argument('--total_env_num', type=int, default=500)
+	parser.add_argument('--training_env_num', type=int, default=500)
+	parser.add_argument('--validation_env_num', type=int, default=100)
 	parser.add_argument('--model_path', type=str, default='./mpnet_data/models/',help='path for saving trained models')
 	parser.add_argument('--num_epochs', type=int, default=800)
 	parser.add_argument('--batch_size', type=int, default=3)
@@ -305,3 +309,4 @@ if __name__ == '__main__':
 	args = parser.parse_args()
 	#test(args)
 	main(args)
+
