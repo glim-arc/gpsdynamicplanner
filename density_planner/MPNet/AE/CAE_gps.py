@@ -155,6 +155,22 @@ def main(args):
 	if not os.path.exists(args.model_path):
 		os.makedirs(args.model_path)
 
+	env_list = torch.ones((args.total_env_num - 100, 1, 10, 241, 401)).to(device)
+
+	print("load env ")
+	for env_num in range(args.total_env_num - 100):
+		# load environment
+		env_grid = load_env(env_num).permute(2, 0, 1).to(device)
+
+		for i in range(10):
+			env_list[env_num][0][i] = env_grid[i * 10]
+
+		env_list[env_num] = env_grid
+
+	dataset = TensorDataset(env_list)
+	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
+	print("env loaded")
+
 	print("training starts")
 	for epoch in range(args.num_epochs):
 		print ("epoch" + str(epoch))
@@ -162,22 +178,6 @@ def main(args):
 
 		stepsize = 6
 		timestep = 10
-
-		for stepstart in range(0, args.total_env_num-100, stepsize):
-			env_list = torch.ones((stepsize, 1, 10, 241, 401)).to("cpu")
-
-			env_idx = 0
-			for env_num in range(stepstart, stepstart + stepsize):
-				# load environment
-				print("env ", env_num)
-				env_grid = load_env(env_num).permute(2, 0, 1).to("cpu")
-
-				for i in range(10):
-					env_list[env_idx][0][i] = env_grid[i*10]
-				env_idx += 1
-
-			dataset = TensorDataset(env_list)
-			dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 
 			for batch_idx, batch in enumerate(dataloader):
 				optimizer.zero_grad()
