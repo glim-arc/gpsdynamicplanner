@@ -285,7 +285,7 @@ def test(args):
 		output = decoder(latent_space)
 		keys = encoder.state_dict().keys()
 		W = encoder.state_dict()[
-			'encoder.14.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
+			'encoder.14.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name. 
 		loss = loss_function(W, cur_grid_batch, output, latent_space)
 		avg_loss = avg_loss + loss.data
 		# ===================backward====================
