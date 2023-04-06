@@ -165,8 +165,6 @@ def main(args):
 		for i in range(10):
 			env_list[env_num][0][i] = env_grid[i * 10]
 
-		env_list[env_num] = env_grid
-
 	dataset = TensorDataset(env_list)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
 	print("env loaded")
