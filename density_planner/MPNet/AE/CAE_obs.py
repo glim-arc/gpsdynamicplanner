@@ -3,6 +3,7 @@ import os
 import torch
 from torch import nn
 from mpnet_data.simulation_objects import StaticObstacle, Environment, DynamicObstacle
+from mpnet_data.simulation_objects import StaticObstacle, Environment, DynamicObstacle
 import numpy as np
 import hyperparams
 from torch.utils.data import TensorDataset
@@ -156,7 +157,7 @@ def main(args):
 
 	params = list(encoder.parameters())+list(decoder.parameters())
 	optimizer = torch.optim.Adam(params)
-	total_loss=[]
+	avg_loss_list=[]
 
 	if not os.path.exists(args.model_path):
 		os.makedirs(args.model_path)
@@ -198,7 +199,7 @@ def main(args):
 
 		print ("--average loss:")
 		print (avg_loss/args.batch_size)
-		total_loss.append(avg_loss/args.batch_size)
+		avg_loss_list.append(avg_loss/args.batch_size)
 
 	print("validation starts")
 	env_list = torch.zeros((args.total_env_num - 100, 1, 1, 241, 401)).to(device)
@@ -228,10 +229,20 @@ def main(args):
 
 	print ("--Validation average loss:")
 	print (avg_loss/100)
-    
-	torch.save(encoder.state_dict(),os.path.join(args.model_path,'cae_encoder.pkl'))
-	torch.save(decoder.state_dict(),os.path.join(args.model_path,'cae_decoder.pkl'))
-	torch.save(total_loss,'total_loss.dat')
+
+	torch.save(encoder.state_dict(), os.path.join(args.model_path,'cae_obs_encoder.model'))
+	torch.save(decoder.state_dict(),os.path.join(args.model_path,'cae_obsdecoder.model'))
+	np.save(os.path.join(args.model_path,'avg_loss_list.npy'), avg_loss_list.numpy())
+
+	plt.figure()
+	epoch = np.arange(1, len(avg_loss_list) + 1)
+	plt.plot(epoch, avg_loss_list)
+	# plt.legend(["30 Ep", "60 Ep", "100 Ep"])
+	plt.ylabel('Average Loss')
+	plt.xlabel('Epoch')
+	plt.title('CAE Average Loss with validation average loss of ' + str(avg_loss[0]))
+	plt.savefig(os.path.join(args.model_path,'avg_loss_list.jpg'), dpi=200)
+	plt.show()
 
 def test(args):
 	env_list = torch.zeros((10,1,241,401))
@@ -283,8 +294,8 @@ if __name__ == '__main__':
 	parser.add_argument('--training_env_num', type=int, default=500)
 	parser.add_argument('--training_traj_num', type=int, default=10)
 	parser.add_argument('--model_path', type=str, default='./mpnet_data/models/',help='path for saving trained models')
-	parser.add_argument('--num_epochs', type=int, default=400)
-	parser.add_argument('--batch_size', type=int, default=10)
+	parser.add_argument('--num_epochs', type=int, default=800)
+	parser.add_argument('--batch_size', type=int, default=80)
 	parser.add_argument('--learning_rate', type=float, default=0.001)
 	args = parser.parse_args()
 	#test(args)
