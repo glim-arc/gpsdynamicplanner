@@ -102,9 +102,9 @@ def loss_function(W, x, recons_x, h):
 	"""
 	W is shape of N_hidden x N. So, we do not need to transpose it as opposed to http://wiseodd.github.io/techblog/2016/12/05/contractive-autoencoder/
 	"""
-	dh = h*(1-h) # N_batch x N_hidden
-	contractive_loss = torch.sum(W**2, dim=1).sum().mul_(lam)
-	return mse + contractive_loss
+	# dh = h*(1-h) # N_batch x N_hidden
+	# contractive_loss = torch.sum(W**2, dim=1).sum().mul_(lam)
+	return mse
 
 def load_env(i):
 	### load hyperparameters
@@ -158,17 +158,21 @@ def main(args):
 		os.makedirs(args.model_path)
 
 	discrete_time = 10
-	env_list = torch.ones((args.total_env_num - args.validation_env_num, 1, discrete_time, 120, 200)).to(device)
+	env_list = torch.ones((args.total_env_num - args.validation_env_num, 1, discrete_time, 120, 200)).to("cpu")
 
 	print("load env ")
 	for env_num in range(args.total_env_num - args.validation_env_num):
 		print("env ", env_num)
 		# load environment
 		env_grid = load_env(env_num).permute(2, 0, 1)
-		env_grid = TF.resize(env_grid, (120, 200)).to(device)
+		env_grid = TF.resize(env_grid, (120, 200)).to("cpu")
 
 		for i in range(discrete_time):
 			env_list[env_num][0][i] = env_grid[i * discrete_time]
+
+	#save in np
+	np.save(os.path.join(args.model_path,'gps_env_list.npy'), env_list.numpy())
+	# env_list = np.load(os.path.join(model_path, 'gps_env_list.npy'))
 
 	dataset = TensorDataset(env_list)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
@@ -217,15 +221,19 @@ def main(args):
 		idx += 1
 	print("Env loaded")
 
+	np.save(os.path.join(args.model_path, 'gps_env_list_val.npy'), env_list.numpy())
+	# env_list = np.load(os.path.join(model_path, 'gps_env_list_val.npy'))
+
 	avg_loss=0
 	start_val_env = args.total_env_num-100
-	for i in range(start_val_env, args.total_env_num, args.batch_size):
+
+	for i in range(start_val_env, args.total_env_num):
 		optimizer.zero_grad()
 		decoder.zero_grad()
 		encoder.zero_grad()
 
 		# ===================forward=====================
-		cur_grid_batch = env_list[i-start_val_env]
+		cur_grid_batch = env_list[i-start_val_env].unsqueeze(dim=0)
 		latent_space = encoder(cur_grid_batch)
 		output = decoder(latent_space)
 		keys = encoder.state_dict().keys()
@@ -314,6 +322,5 @@ if __name__ == '__main__':
 	parser.add_argument('--batch_size', type=int, default=40)
 	parser.add_argument('--learning_rate', type=float, default=0.001)
 	args = parser.parse_args()
-	test(args)
+	#test(args)
 	main(args)
-
