@@ -24,7 +24,7 @@ class Encoder(nn.Module):
 			nn.Conv2d(16, 32, 5, stride=2, padding=0),
 			nn.PReLU(),
 
-			nn.Flatten(start_dim=0),
+			nn.Flatten(start_dim=1),
 
 			# linear layer
 			nn.Linear(32*13*23, 2048),nn.PReLU(),nn.Linear(2048, 512),nn.PReLU(),nn.Linear(512, 128),nn.PReLU(),nn.Linear(128, 28)
@@ -64,7 +64,7 @@ class Decoder(nn.Module):
 			nn.Linear(28, 128),nn.PReLU(),nn.Linear(128, 512),nn.PReLU(),nn.Linear(512, 2048),nn.PReLU(),nn.Linear(2048, 32*13*23),
 
 			#flatten
-			nn.Unflatten(dim=0, unflattened_size=(1,32, 13, 23)),
+			nn.Unflatten(dim=1, unflattened_size=(32, 13, 23)),
 
 			#de-convolutional layer
 			nn.ConvTranspose2d(32, 16, 5,
@@ -80,7 +80,7 @@ class Decoder(nn.Module):
 		)
 		# self.lin = nn.Sequential(nn.Linear(28, 128),nn.PReLU(),nn.Linear(128, 512),nn.PReLU(),nn.Linear(512, 2048),nn.PReLU(),nn.Linear(2048, 32*13*23))
 		#
-		# self.unflatten = nn.Unflatten(dim=0,unflattened_size=(1,32, 13, 23))
+		# self.unflatten = nn.Unflatten(dim=0,unflattened_size=(32, 13, 23))
 		#
 		# self.deconv = nn.Sequential(
 		# 	nn.ConvTranspose2d(32, 16, 5,
@@ -161,11 +161,11 @@ def main(args):
 	if not os.path.exists(args.model_path):
 		os.makedirs(args.model_path)
 
-	env_list = torch.zeros((args.total_env_num-100, 1, 1, 241, 401)).to(device)
+	env_list = torch.ones((args.total_env_num-100, 1, 241, 401)).to(device)
 
+	print("load env ")
 	for env_num in range(args.total_env_num-100):
 		# load environment
-		print("load env " + str(env_num))
 		env_grid = load_env(env_num).permute(2, 0, 1).unsqueeze(dim=0).to(device)
 		env_list[env_num] = env_grid
 
@@ -178,10 +178,11 @@ def main(args):
 		print ("epoch" + str(epoch))
 		avg_loss=0
 
-		for batch_idx, cur_grid_batch in enumerate(dataloader):
+		for batch_idx, batch in enumerate(dataloader):
 			optimizer.zero_grad()
 			decoder.zero_grad()
 			encoder.zero_grad()
+			cur_grid_batch = batch[0].to(device)
 
 			# ===================forward=====================
 			latent_space = encoder(cur_grid_batch)
@@ -196,8 +197,8 @@ def main(args):
 			optimizer.step()
 
 		print ("--average loss:")
-		print (avg_loss/(len(obs)/args.batch_size))
-		total_loss.append(avg_loss/(len(obs)/args.batch_size))
+		print (avg_loss/args.batch_size)
+		total_loss.append(avg_loss/args.batch_size)
 
 	print("validation starts")
 	env_list = torch.zeros((args.total_env_num - 100, 1, 1, 241, 401)).to(device)
@@ -227,16 +228,15 @@ def main(args):
 
 	print ("--Validation average loss:")
 	print (avg_loss/100)
-
     
 	torch.save(encoder.state_dict(),os.path.join(args.model_path,'cae_encoder.pkl'))
 	torch.save(decoder.state_dict(),os.path.join(args.model_path,'cae_decoder.pkl'))
 	torch.save(total_loss,'total_loss.dat')
 
 def test(args):
-	env_list = torch.zeros((2,1,1,241,401))
+	env_list = torch.zeros((10,1,241,401))
 
-	for env_num in range(2):
+	for env_num in range(10):
 		# load environment
 		print("load env " + str(env_num))
 		env_grid = load_env(env_num).permute(2,0,1).unsqueeze(dim = 0)
@@ -247,7 +247,7 @@ def test(args):
 	dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
 
 	for batch_idx, samples in enumerate(dataloader):
-		env_train = samples
+		cur_grid_batch = samples[0]
 
 		encoder = Encoder()
 		decoder = Decoder()
@@ -256,8 +256,10 @@ def test(args):
 		optimizer = torch.optim.Adam(params, lr =args.learning_rate)
 		avg_loss = 0
 
-		cur_grid_batch = torch.ones((1,1,241,401))
+		# cur_grid_batch = torch.ones((2,1,1,241,401))
 		# cur_grid_batch = env_train
+
+		temp = cur_grid_batch.numpy()
 
 		# ===================forward=====================
 		latent_space = encoder(cur_grid_batch)
@@ -285,5 +287,5 @@ if __name__ == '__main__':
 	parser.add_argument('--batch_size', type=int, default=10)
 	parser.add_argument('--learning_rate', type=float, default=0.001)
 	args = parser.parse_args()
-	# test(args)
+	#test(args)
 	main(args)
