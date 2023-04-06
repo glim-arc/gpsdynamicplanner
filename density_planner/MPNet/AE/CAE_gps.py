@@ -202,7 +202,7 @@ def main(args):
 		# load environment
 		print("load env " + str(env_num))
 		env_grid = load_env(env_num).permute(2, 0, 1).to(device)
-		env_grid = TF.resize(env_grid, (120*200))
+		env_grid = TF.Resize(env_grid, (120*200))
 
 		for i in range(10):
 			env_list[idx][0][i] = env_grid[i * 10]
