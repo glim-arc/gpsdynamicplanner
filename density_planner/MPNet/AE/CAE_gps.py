@@ -157,10 +157,10 @@ def main(args):
 	for env_num in range(args.total_env_num - args.validation_env_num):
 		print("env ", env_num)
 		# load environment
-		env_grid = load_env(env_num).permute(2, 0, 1).to("cpu")
-		env_grid = TF.resize(env_grid, (120 * 200))
+		env_grid = load_env(env_num).permute(2, 0, 1)
+		env_grid = TF.resize(env_grid, (120, 200)).to(device)
 
-		for i in range(10):
+		for i in range(discrete_time):
 			env_list[env_num][0][i] = env_grid[i * discrete_time]
 
 	dataset = TensorDataset(env_list)
@@ -199,12 +199,13 @@ def main(args):
 
 	idx = 0
 	for env_num in range(args.total_env_num - args.validation_env_num, args.total_env_num):
+		print("env ", env_num)
 		# load environment
-		print("load env " + str(env_num))
-		env_grid = load_env(env_num).permute(2, 0, 1).to(device)
+		env_grid = load_env(env_num).permute(2, 0, 1)
+		env_grid = TF.resize(env_grid, (120, 200)).to(device)
 
-		for i in range(10):
-			env_list[idx][0][i] = TF.Resize(env_grid[i * 10], (120*200))
+		for i in range(discrete_time):
+			env_list[idx][0][i] = env_grid[i * discrete_time]
 
 		idx += 1
 	print("Env loaded")
