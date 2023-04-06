@@ -3,7 +3,6 @@ import os
 import torch
 from torch import nn
 from mpnet_data.simulation_objects import StaticObstacle, Environment, DynamicObstacle
-from mpnet_data.simulation_objects import StaticObstacle, Environment, DynamicObstacle
 import numpy as np
 import hyperparams
 from torch.utils.data import TensorDataset
@@ -22,6 +21,7 @@ class Encoder(nn.Module):
 			nn.Conv2d(1, 8, 5, stride=2, padding=1),
 			nn.PReLU(),
 			nn.Conv2d(8, 16, 5, stride=2, padding=1),
+			nn.BatchNorm2d(16),
 			nn.PReLU(),
 			nn.Conv2d(16, 32, 5, stride=2, padding=0),
 			nn.PReLU(),
@@ -71,6 +71,7 @@ class Decoder(nn.Module):
 			#de-convolutional layer
 			nn.ConvTranspose2d(32, 16, 5,
 							   stride=2, output_padding=0),
+			nn.BatchNorm2d(16),
 			nn.PReLU(),
 			nn.ConvTranspose2d(16, 8, 5, stride=2,
 							   padding=1, output_padding=1),
@@ -147,6 +148,9 @@ def load_env(i):
 	return environment.grid
 
 def main(args):
+	seed = 10
+	torch.manual_seed(seed)
+
 	encoder = Encoder()
 	decoder = Decoder()
 
@@ -191,7 +195,7 @@ def main(args):
 			output = decoder(latent_space)
 			keys = encoder.state_dict().keys()
 			W = encoder.state_dict()[
-				'encoder.14.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
+				'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
 			loss = loss_function(W, cur_grid_batch, output, latent_space)
 			avg_loss = avg_loss + loss.data
 			# ===================backward====================
@@ -227,7 +231,7 @@ def main(args):
 		output = decoder(latent_space)
 		keys = encoder.state_dict().keys()
 		W = encoder.state_dict()[
-			'encoder.14.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
+			'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
 		loss = loss_function(W, cur_grid_batch, output, latent_space)
 		avg_loss = avg_loss + loss.data
 
@@ -238,9 +242,9 @@ def main(args):
 	val_loss = np.array(avg_loss.cpu().numpy()/100)
 
 	torch.save(encoder.state_dict(), os.path.join(args.model_path,'cae_obs_encoder.model'))
-	torch.save(decoder.state_dict(),os.path.join(args.model_path,'cae_obsdecoder.model'))
-	np.save(os.path.join(args.model_path,'avg_loss_list.npy'), avg_loss_list)
-	np.save(os.path.join(args.model_path,'val_loss.npy'), val_loss)
+	torch.save(decoder.state_dict(),os.path.join(args.model_path,'cae_obs_decoder.model'))
+	np.save(os.path.join(args.model_path,'obs_avg_loss_list.npy'), avg_loss_list)
+	np.save(os.path.join(args.model_path,'obs_val_loss.npy'), val_loss)
 
 	# plt.figure()
 	# epoch = np.arange(1, len(avg_loss_list) + 1)
@@ -285,7 +289,7 @@ def test(args):
 		output = decoder(latent_space)
 		keys = encoder.state_dict().keys()
 		W = encoder.state_dict()[
-			'encoder.14.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name. 
+			'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
 		loss = loss_function(W, cur_grid_batch, output, latent_space)
 		avg_loss = avg_loss + loss.data
 		# ===================backward====================

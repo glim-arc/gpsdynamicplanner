@@ -13,6 +13,7 @@ training obs
 
 ```bash
 python -m MPNet.AE.CAE_obs
+python -m MPNet.AE.CAE_gps
 ```
 
 for cluster
