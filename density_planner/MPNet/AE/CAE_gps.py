@@ -18,17 +18,19 @@ class Encoder(nn.Module):
 		# convolutional layer
 		self.encoder = nn.Sequential(
 			# convolutional layer
-			nn.MaxPool3d(kernel_size=2, stride=2),
 			nn.Conv3d(1, 8, 2, stride=2, padding=1),
 			nn.PReLU(),
+			nn.BatchNorm3d(8),
 			nn.Conv3d(8, 16, 2, stride=2, padding=1),
 			nn.BatchNorm3d(16),
+			nn.PReLU(),
+			nn.Conv3d(16, 32, 2, stride=2, padding=0),
 			nn.PReLU(),
 
 			nn.Flatten(start_dim=1),
 
 			# linear layer
-			nn.Linear(16 * 2 * 16 * 26, 10240), nn.PReLU(), nn.Linear(10240, 4096), nn.PReLU(), nn.Linear(4096, 2048),
+			nn.Linear(32 * 2 * 15 * 25, 10240), nn.PReLU(), nn.Linear(10240, 4096), nn.PReLU(), nn.Linear(4096, 2048),
 			nn.PReLU(),
 			nn.Linear(2048, 1024), nn.PReLU(), nn.Linear(1024, 512)
 		)
@@ -36,19 +38,21 @@ class Encoder(nn.Module):
 		# #convolutional layer #1*240*400
 		# self.conv = self.encoder_cnn = nn.Sequential(
 		# 	#1*101*240*400
-		# 	nn.MaxPool3d(kernel_size=2, stride=2),
 		# 	nn.Conv3d(1, 8, 2, stride=2, padding=1),
 		# 	nn.PReLU(),
+		# 	nn.BatchNorm3d(8),
 		# 	nn.Conv3d(8, 16, 2, stride=2, padding=1),
 		# 	nn.BatchNorm3d(16),
 		# 	nn.PReLU(),
+		# 	nn.Conv3d(16, 32, 2, stride=2, padding=0),
+		# 	nn.PReLU()
 		# ) #32*1*8*13
 		#
 		# #flatten
 		# self.flatten = nn.Flatten(start_dim=1)
 		#
 		# #linear
-		# self.lin = nn.Sequential(nn.Linear(16*2*16*26, 10240),nn.PReLU(),nn.Linear(10240, 4096),nn.PReLU(),nn.Linear(4096, 2048),nn.PReLU(),
+		# self.lin = nn.Sequential(nn.Linear(32*2*15*25, 10240),nn.PReLU(),nn.Linear(10240, 4096),nn.PReLU(),nn.Linear(4096, 2048),nn.PReLU(),
 		# 						 nn.Linear(2048, 1024),nn.PReLU(),nn.Linear(1024, 512))
 
 	def forward(self, x):
@@ -65,12 +69,15 @@ class Decoder(nn.Module):
 		self.decoder = nn.Sequential(
 			#linear layer
 			nn.Linear(512, 1024),nn.PReLU(),nn.Linear(1024, 2048),nn.PReLU(),nn.Linear(2048, 4096),nn.PReLU(),nn.Linear(4096, 10240),
-			nn.PReLU(), nn.Linear(10240, 16*2*16*26), nn.PReLU(),
+			nn.PReLU(), nn.Linear(10240, 32*2*15*25), nn.PReLU(),
 
 			#flatten
-			nn.Unflatten(dim=1, unflattened_size=(16,2,16,26)),
+			nn.Unflatten(dim=1, unflattened_size=(32,2,15,25)),
 
 			#de-convolutional layer
+			nn.ConvTranspose3d(32, 16, 2, stride=2, padding=0),
+			nn.BatchNorm3d(16),
+			nn.PReLU(),
 			nn.ConvTranspose3d(16, 8, 2, stride=2,
 							   padding=1, output_padding=1),
 			nn.BatchNorm3d(8),
@@ -253,7 +260,7 @@ def test(args):
 	decoder = Decoder()
 
 	device = "cpu"
-	total = 4
+	total = 2
 	discrete_time = 10
 	env_list = torch.ones((total,1, discrete_time, 120, 200)).to(device)
 
@@ -307,6 +314,6 @@ if __name__ == '__main__':
 	parser.add_argument('--batch_size', type=int, default=40)
 	parser.add_argument('--learning_rate', type=float, default=0.001)
 	args = parser.parse_args()
-	#test(args)
+	test(args)
 	main(args)
 
