@@ -157,7 +157,7 @@ def main(args):
 	for env_num in range(args.total_env_num - args.validation_env_num):
 		print("env ", env_num)
 		# load environment
-		env_grid = load_env(env_num).permute(2, 0, 1).to(device)
+		env_grid = load_env(env_num).permute(2, 0, 1).to("cpu")
 		env_grid = TF.resize(env_grid, (120 * 200))
 
 		for i in range(10):
