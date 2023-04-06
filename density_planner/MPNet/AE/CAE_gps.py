@@ -128,7 +128,7 @@ def load_env(i):
 	environment = Environment(objects, args)
 	environment.forward_occupancy(step_size=100)
 
-	return environment.grid
+	return environment.gps_grid
 
 def main(args):
 	seed = 10
