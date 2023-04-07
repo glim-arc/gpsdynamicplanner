@@ -161,18 +161,19 @@ def main(args):
 	env_list = torch.ones((args.total_env_num - args.validation_env_num, 1, discrete_time, 120, 200)).to("cpu")
 
 	print("load env ")
-	for env_num in range(args.total_env_num - args.validation_env_num):
-		print("env ", env_num)
-		# load environment
-		env_grid = load_env(env_num).permute(2, 0, 1)
-		env_grid = TF.resize(env_grid, (120, 200)).to("cpu")
+	# for env_num in range(args.total_env_num - args.validation_env_num):
+	# 	print("env ", env_num)
+	# 	# load environment
+	# 	env_grid = load_env(env_num).permute(2, 0, 1)
+	# 	env_grid = TF.resize(env_grid, (120, 200)).to("cpu")
 
-		for i in range(discrete_time):
-			env_list[env_num][0][i] = env_grid[i * discrete_time]
+	# 	for i in range(discrete_time):
+	# 		env_list[env_num][0][i] = env_grid[i * discrete_time]
 
 	#save in np
-	np.save(os.path.join(args.model_path,'gps_env_list.npy'), env_list.numpy())
-	# env_list = np.load(os.path.join(model_path, 'gps_env_list.npy'))
+	# np.save(os.path.join(args.model_path,'gps_env_list.npy'), env_list.numpy())
+	env_list = np.load(os.path.join(args.model_path, 'gps_env_list.npy'))
+	env_list = torch.from_numpy(env_list).to("cpu")
 
 	dataset = TensorDataset(env_list)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True)
@@ -221,7 +222,7 @@ def main(args):
 		idx += 1
 	print("Env loaded")
 
-	np.save(os.path.join(args.model_path, 'gps_env_list_val.npy'), env_list.numpy())
+	np.save(os.path.join(args.model_path, 'gps_env_list_val.npy'), env_list.cpu().numpy())
 	# env_list = np.load(os.path.join(model_path, 'gps_env_list_val.npy'))
 
 	avg_loss=0

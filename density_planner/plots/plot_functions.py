@@ -10,10 +10,7 @@ from motion_planning.utils import make_path, pos2gridpos, traj2grid, pred2grid, 
 ### settings
 plt.style.use('seaborn-paper')
 matplotlib.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
-plt.rcParams['text.usetex'] = True
-plt.rcParams['text.latex.preamble'] = r'\usepackage{{amsmath}}'
-plt.rcParams['text.latex.preamble'] = r'\usepackage{{mathrsfs}}'
-# plt.rc('font',**{'family':'serif','serif':['Palatino']})
+plt.rcParams['text.usetex'] = False
 plt.rcParams['legend.fontsize'] = 18
 plt.rc('axes', titlesize=18)
 plt.rc('axes', labelsize=18)
