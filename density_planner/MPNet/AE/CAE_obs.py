@@ -8,7 +8,7 @@ import hyperparams
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-
+from mpnet_data.plot import plot
 
 # https://medium.com/dataseries/convolutional-autoencoder-in-pytorch-on-mnist-dataset-d65145c132ac
 
@@ -190,6 +190,7 @@ def main(args):
     print("env loaded")
 
     print("training starts")
+    ctr = 0
     for epoch in range(args.num_epochs):
         print("epoch" + str(epoch))
         avg_loss = 0
@@ -212,9 +213,13 @@ def main(args):
             loss.backward()
             optimizer.step()
 
+        if ctr == 0:
+            ctr = 1
+
         print("--average loss:")
-        print(avg_loss / args.batch_size)
-        avg_loss_list.append(avg_loss.cpu().numpy() / args.batch_size)
+        avg_loss = avg_loss.cpu().numpy() / args.batch_size / ctr
+        print(avg_loss)
+        avg_loss_list.append(avg_loss)
 
     print("validation starts")
     env_list = torch.zeros((args.total_env_num - 100, 1, 1, 241, 401)).to(device)
@@ -237,6 +242,7 @@ def main(args):
 
         # ===================forward=====================
         cur_grid_batch = env_list[i - start_val_env]
+        print(cur_grid_batch.shape)
         latent_space = encoder(cur_grid_batch)
         output = decoder(latent_space)
         keys = encoder.state_dict().keys()
@@ -246,26 +252,18 @@ def main(args):
         avg_loss = avg_loss + loss.data
 
     print("--Validation average loss:")
-    print(avg_loss / 100)
+    avg_loss = avg_loss.cpu().numpy() / 100
+    print(avg_loss)
 
     avg_loss_list = np.array(avg_loss_list)
-    val_loss = np.array(avg_loss.cpu().numpy() / 100)
+    val_loss = np.array(avg_loss)
 
     torch.save(encoder.state_dict(), os.path.join(args.model_path, 'cae_obs_encoder.model'))
     torch.save(decoder.state_dict(), os.path.join(args.model_path, 'cae_obs_decoder.model'))
     np.save(os.path.join(args.model_path, 'obs_avg_loss_list.npy'), avg_loss_list)
     np.save(os.path.join(args.model_path, 'obs_val_loss.npy'), val_loss)
-
-
-# plt.figure()
-# epoch = np.arange(1, len(avg_loss_list) + 1)
-# plt.plot(epoch, avg_loss_list)
-# # plt.legend(["30 Ep", "60 Ep", "100 Ep"])
-# plt.ylabel('Average Loss')
-# plt.xlabel('Epoch')
-# plt.title('CAE Average Loss with validation average loss of ' + str(avg_loss.item()/100))
-# plt.savefig(os.path.join(args.model_path,'avg_loss_list.jpg'), dpi=200)
-# plt.show()
+    
+    plot(args.model_path)
 
 def test(args):
     env_list = torch.zeros((10, 1, 241, 401))
