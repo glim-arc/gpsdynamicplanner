@@ -265,46 +265,44 @@ def main(args):
     
     plot(args.model_path)
 
-def test(args):
-    env_list = torch.zeros((10, 1, 241, 401))
+def encode_obs(args):
+    seed = args.seed
+    torch.manual_seed(seed)
 
-    for env_num in range(10):
+    encoder = Encoder()
+
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+        encoder.to(device)
+
+    if not os.path.exists(args.model_path):
+        os.makedirs(args.model_path)
+
+    env_list = torch.ones((args.total_env_num, 1, 241, 401)).to(device)
+
+    print("load env ")
+    for env_num in range(args.total_env_num):
         # load environment
-        print("load env " + str(env_num))
-        env_grid = load_env(env_num).permute(2, 0, 1).unsqueeze(dim=0)
+        env_grid = load_env(env_num).permute(2, 0, 1).unsqueeze(dim=0).to(device)
         env_list[env_num] = env_grid
-        c = env_list[env_num].numpy()
 
     dataset = TensorDataset(env_list)
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=args.total_env_num, shuffle=False)
+    print("env loaded")
 
-    for batch_idx, samples in enumerate(dataloader):
-        cur_grid_batch = samples[0]
+    latent_space_list = []
 
-        encoder = Encoder()
-        decoder = Decoder()
-
-        params = list(encoder.parameters()) + list(decoder.parameters())
-        optimizer = torch.optim.Adam(params, lr=args.learning_rate)
-        avg_loss = 0
-
-        # cur_grid_batch = torch.ones((2,1,1,241,401))
-        # cur_grid_batch = env_train
-
-        temp = cur_grid_batch.numpy()
+    for batch_idx, batch in enumerate(dataloader):
+        cur_grid_batch = batch[0].to(device)
 
         # ===================forward=====================
         latent_space = encoder(cur_grid_batch)
-        output = decoder(latent_space)
-        keys = encoder.state_dict().keys()
-        W = encoder.state_dict()[
-            'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
-        loss = loss_function(W, cur_grid_batch, output, latent_space)
-        avg_loss = avg_loss + loss.data
-        # ===================backward====================
-        loss.backward()
-        optimizer.step()
+        latent_space_list.append(latent_space)
 
+    latent_space_list = torch.cat(latent_space_list, dim = 0).to("cpu")
+
+    return latent_space_list
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -316,9 +314,9 @@ if __name__ == '__main__':
     parser.add_argument('--training_env_num', type=int, default=500)
     parser.add_argument('--training_traj_num', type=int, default=10)
     parser.add_argument('--model_path', type=str, default='./mpnet_data/models/', help='path for saving trained models')
+    parser.add_argument('--data_path', type=str, default='./mpnet_data/', help='path for saving data')
     parser.add_argument('--num_epochs', type=int, default=800)
     parser.add_argument('--batch_size', type=int, default=100)
     parser.add_argument('--learning_rate', type=float, default=0.001)
     args = parser.parse_args()
-    # test(args)
     main(args)

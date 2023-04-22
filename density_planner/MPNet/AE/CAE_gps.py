@@ -271,51 +271,58 @@ def main(args):
     np.save(os.path.join(args.model_path, 'gps_val_loss.npy'), val_loss)
 
 
-def test(args):
+def encode_gps(args):
+    seed = args.seed
+    torch.manual_seed(seed)
+
     encoder = Encoder()
-    decoder = Decoder()
 
     device = "cpu"
-    total = 2
+    if torch.cuda.is_available():
+        device = "cuda"
+        encoder.to(device)
+        decoder.to(device)
+
+    if not os.path.exists(args.model_path):
+        os.makedirs(args.model_path)
+
     discrete_time = 10
-    env_list = torch.ones((total, 1, discrete_time, 120, 200)).to(device)
+    env_list = torch.ones((args.total_env_num - args.validation_env_num, 1, discrete_time, 120, 200)).to("cpu")
 
     print("load env ")
-    for env_num in range(total):
-        # load environment
-        print(env_num)
-        env_grid = load_env(env_num).permute(2, 0, 1)
-        env_grid = TF.resize(env_grid, (120, 200)).to(device)
 
-        for i in range(discrete_time):
-            env_list[env_num][0][i] = env_grid[i * discrete_time]
+    if load:
+        env_list = np.load(os.path.join(args.model_path, 'gps_env_list_planning.npy'))
+        env_list = torch.from_numpy(env_list).to("cpu")
+    else:
+        for env_num in range(args.total_env_num):
+            print("env ", env_num)
+            # load environment
+            env_grid = load_env(env_num).permute(2, 0, 1)
+            env_grid = TF.resize(env_grid, (120, 200)).to("cpu")
+
+            for i in range(discrete_time):
+                env_list[env_num][0][i] = env_grid[i * discrete_time]
+
+        ##save in np
+        np.save(os.path.join(args.model_path, 'gps_env_list_planning.npy'), env_list.numpy())
 
     dataset = TensorDataset(env_list)
-    dataloader = DataLoader(dataset, batch_size=2, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)
+    print("env loaded")
 
-    for batch_idx, samples in enumerate(dataloader):
-        cur_grid_batch = samples[0]
+    latent_space_list = []
 
-        params = list(encoder.parameters()) + list(decoder.parameters())
-        optimizer = torch.optim.Adam(params, lr=args.learning_rate)
-        avg_loss = 0
-
-        # cur_grid_batch = torch.ones((2,1,1,241,401))
-        # cur_grid_batch = env_train
+    for batch_idx, batch in enumerate(dataloader):
+        cur_grid_batch = batch[0].to(device)
 
         # ===================forward=====================
         latent_space = encoder(cur_grid_batch)
-        output = decoder(latent_space)
-        keys = encoder.state_dict().keys()
-        W = encoder.state_dict()[
-            'encoder.15.weight']  # regularize or contracting last layer of encoder. Print keys to displace the layers name.
-        loss = loss_function(W, cur_grid_batch, output, latent_space)
-        avg_loss = avg_loss + loss.data
-        # ===================backward====================
-        loss.backward()
-        optimizer.step()
-    print("test passed")
+        latent_space_list.append(latent_space)
 
+    latent_space_list = torch.cat(latent_space_list, dim=0).to("cpu")
+
+    return latent_space_list
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
