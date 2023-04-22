@@ -28,9 +28,13 @@ def create_mp_task(args, seed, env, cur_start_goal):
 
     # start point
     start, goal = cur_start_goal
-    xref0 = torch.from_numpy(start).reshape(1, -1, 1).type(torch.FloatTensor)
+    start = start.tolist()
+    goal = goal.tolist()
+    
+     # start point
+    xref0 = torch.tensor([0, -25, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
     # goal point
-    xrefN = torch.from_numpy(goal).reshape(1, -1, 1)
+    xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
 
     logging.info("Start State: [%.1f, %.1f, %.1f, %.1f]" % (xref0[0, 0, 0], xref0[0, 1, 0], xref0[0, 2, 0], xref0[0, 3, 0]))
     logging.info("Goal Position: [%.1f, %.1f]" % (xrefN[0, 0, 0], xrefN[0, 1, 0]))

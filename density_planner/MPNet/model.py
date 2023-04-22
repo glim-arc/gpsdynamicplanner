@@ -6,6 +6,8 @@ class MLP(nn.Module):
 	def __init__(self, input_size, output_size):
 		super(MLP, self).__init__()
 		self.fc = nn.Sequential(
+		nn.Linear(input_size, 5120),nn.PReLU(),nn.Dropout(),
+		nn.BatchNorm1d(5120),
 		nn.Linear(5120, 2560),nn.PReLU(),nn.Dropout(),
 		nn.BatchNorm1d(2560),
 		nn.Linear(2560, 1280), nn.PReLU(), nn.Dropout(),

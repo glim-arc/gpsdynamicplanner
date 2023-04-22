@@ -287,11 +287,11 @@ def encode_gps(args):
         os.makedirs(args.model_path)
 
     discrete_time = 10
-    env_list = torch.ones((args.total_env_num - args.validation_env_num, 1, discrete_time, 120, 200)).to("cpu")
+    env_list = torch.ones((args.total_env_num, 1, discrete_time, 120, 200)).to("cpu")
 
     print("load env ")
 
-    if load:
+    if args.load:
         env_list = np.load(os.path.join(args.model_path, 'gps_env_list_planning.npy'))
         env_list = torch.from_numpy(env_list).to("cpu")
     else:

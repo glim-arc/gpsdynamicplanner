@@ -1,3 +1,7 @@
+import os
+import sys
+print(os.getcwd())
+sys.path.append(os.getcwd())
 import hyperparams
 import torch
 import pickle
