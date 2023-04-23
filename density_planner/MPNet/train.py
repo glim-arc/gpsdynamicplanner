@@ -56,6 +56,7 @@ def main(args):
 			output = planner(cur_batch)
 
 			loss = mse_loss(output, cur_batch_output)
+			print(loss)
 			cur_batch_loss.append(loss.cpu().detach().numpy())
 			# ===================backward====================
 			loss.backward()
@@ -63,7 +64,7 @@ def main(args):
 
 		print("--average loss:")
 		avg_loss.append(sum(cur_batch_loss) / len(cur_batch_loss))
-		print(avg_loss)
+		print(avg_loss[-1])
 		avg_loss_list.append(avg_loss)
 
 	torch.save(planner.state_dict(), os.path.join(args.data_path, 'planner.model'))
@@ -89,7 +90,7 @@ def main(args):
 
 	print("--Validation average loss:")
 	avg_loss = sum(avg_loss) / len(avg_loss)
-	print(avg_loss)
+	print(avg_loss[-1])
 
 	val_loss = np.array(avg_loss)
 

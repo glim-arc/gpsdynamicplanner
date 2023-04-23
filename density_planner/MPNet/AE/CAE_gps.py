@@ -281,10 +281,9 @@ def encode_gps(args):
     if torch.cuda.is_available():
         device = "cuda"
         encoder.to(device)
-        decoder.to(device)
-
-    if not os.path.exists(args.model_path):
-        os.makedirs(args.model_path)
+        
+    model = torch.load(os.path.join(args.model_path,'cae_gps_encoder.model'), map_location=torch.device('cpu'))
+    encoder.load_state_dict(model)
 
     discrete_time = 10
     env_list = torch.ones((args.total_env_num, 1, discrete_time, 120, 200)).to("cpu")

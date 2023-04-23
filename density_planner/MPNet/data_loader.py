@@ -127,7 +127,7 @@ if __name__ == '__main__':
 	parser.add_argument('--training_traj_num', type=int, default=10)
 	parser.add_argument('--model_path', type=str, default='./mpnet_data/models/', help='path for saving trained models')
 	parser.add_argument('--data_path', type=str, default='./mpnet_data/', help='path for saving data')
-	parser.add_argument('--batch_size', type=int, default=100)
+	parser.add_argument('--batch_size', type=int, default=2000)
 	parser.add_argument('--learning_rate', type=float, default=0.001)
 	parser.add_argument('--start_size', type=int, default=start_size)
 	parser.add_argument('--goal_size', type=int, default=goal_size)
