@@ -272,9 +272,6 @@ def encode_obs(args):
     encoder = Encoder()
 
     device = "cpu"
-    if torch.cuda.is_available():
-        device = "cuda"
-        encoder.to(device)
         
     model = torch.load(os.path.join(args.model_path,'cae_obs_encoder.model'), map_location=torch.device('cpu'))
     encoder.load_state_dict(model)

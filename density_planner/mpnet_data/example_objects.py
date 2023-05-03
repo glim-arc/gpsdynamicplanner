@@ -8,7 +8,7 @@ import torch
 import logging
 
 
-def create_mp_task(args, seed, env, cur_start_goal):
+def create_mp_task_temp(args, seed, env, cur_start_goal):
     """
     function to load the environment and sample the initial state and the goal position
 
@@ -28,13 +28,39 @@ def create_mp_task(args, seed, env, cur_start_goal):
 
     # start point
     start, goal = cur_start_goal
-    start = start.tolist()
-    goal = goal.tolist()
-    
-     # start point
-    xref0 = torch.tensor([0, -25, 1.5, 3, 0]).reshape(1, -1, 1).type(torch.FloatTensor)
+    xref0 = torch.from_numpy(start).reshape(1, -1, 1).type(torch.FloatTensor)
     # goal point
-    xrefN = torch.tensor([0., 8, 4, 1, 0]).reshape(1, -1, 1)
+    xrefN = torch.from_numpy(goal).reshape(1, -1, 1)
+
+    logging.info("Start State: [%.1f, %.1f, %.1f, %.1f]" % (xref0[0, 0, 0], xref0[0, 1, 0], xref0[0, 2, 0], xref0[0, 3, 0]))
+    logging.info("Goal Position: [%.1f, %.1f]" % (xrefN[0, 0, 0], xrefN[0, 1, 0]))
+
+    # create the ego vehicle
+    ego = EgoVehicle(xref0, xrefN, env, args, video=args.mp_video)
+    return ego
+
+def create_mp_task(args, seed, env, cur_start_goal):
+    """
+    function to load the environment and sample the initial state and the goal position
+    :param args:    settings
+    :param seed:    random seed
+    :return: ego:   object for the ego vehicle which contains the start and goal position and the environment
+                        occupation map
+    """
+    logging.info("")
+    logging.info("###################################################################")
+    logging.info("###################################################################")
+    ### create environment and motion planning problem
+
+    # generate random environment
+    env = create_environment(args, env, timestep=100, stationary=args.mp_stationary)
+    logging.info("Loading Simulated Environment (seed %d)" % (seed))
+
+    # start point
+    start, goal = cur_start_goal
+    xref0 = torch.from_numpy(start).reshape(1, -1, 1).type(torch.FloatTensor)
+    # goal point
+    xrefN = torch.from_numpy(goal).reshape(1, -1, 1).type(torch.FloatTensor)
 
     logging.info("Start State: [%.1f, %.1f, %.1f, %.1f]" % (xref0[0, 0, 0], xref0[0, 1, 0], xref0[0, 2, 0], xref0[0, 3, 0]))
     logging.info("Goal Position: [%.1f, %.1f]" % (xrefN[0, 0, 0], xrefN[0, 1, 0]))

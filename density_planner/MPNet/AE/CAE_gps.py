@@ -1,5 +1,9 @@
-import argparse
+import sys
 import os
+print(os.getcwd())
+sys.path.append(os.getcwd())
+
+import argparse
 import torch
 from torch import nn
 from gps_planning.simulation_objects import StaticObstacle, Environment, DynamicObstacle
@@ -32,9 +36,9 @@ class Encoder(nn.Module):
             nn.Flatten(start_dim=1),
 
             # linear layer
-            nn.Linear(32 * 2 * 15 * 25, 10240), nn.PReLU(),# nn.BatchNorm1d(10240),
-            nn.Linear(10240, 8192), nn.PReLU(),# nn.BatchNorm1d(8192),
-            nn.Linear(8192, 4096), nn.PReLU(), nn.Linear(4096, 2048)
+            nn.Linear(32 * 2 * 15 * 25, 10240), nn.PReLU(),
+            nn.Linear(10240, 5120), nn.PReLU(),
+            nn.Linear(5120, 2048), nn.PReLU(), nn.Linear(2048, 768)
         )
 
     # #convolutional layer #1*240*400
@@ -71,8 +75,8 @@ class Decoder(nn.Module):
 
         self.decoder = nn.Sequential(
             # linear layer
-            nn.Linear(2048, 4096), nn.PReLU(),  nn.Linear(4096, 8192),  nn.PReLU(), #nn.BatchNorm1d(8192),
-            nn.Linear(8192, 10240), nn.PReLU(), #nn.BatchNorm1d(10240),
+            nn.Linear(768, 2048), nn.PReLU(),  nn.Linear(2048, 5120),  nn.PReLU(), #nn.BatchNorm1d(8192),
+            nn.Linear(5120, 10240), nn.PReLU(), #nn.BatchNorm1d(10240),
             nn.Linear(10240, 32 * 2 * 15 * 25),
 
             # flatten
@@ -179,7 +183,7 @@ def main(args):
     # 	for i in range(discrete_time):
     # 		env_list[env_num][0][i] = env_grid[i * discrete_time]
 
-    # save in np
+    # #save in np
     # np.save(os.path.join(args.model_path,'gps_env_list.npy'), env_list.numpy())
 
     env_list = np.load(os.path.join(args.model_path, 'gps_env_list.npy'))
@@ -278,33 +282,33 @@ def encode_gps(args):
     encoder = Encoder()
 
     device = "cpu"
+    model = torch.load(os.path.join(args.model_path,'cae_gps_encoder.model'), map_location=torch.device('cpu'))
     if torch.cuda.is_available():
         device = "cuda"
-        encoder.to(device)
         
-    model = torch.load(os.path.join(args.model_path,'cae_gps_encoder.model'), map_location=torch.device('cpu'))
     encoder.load_state_dict(model)
+    encoder.to(device)
 
     discrete_time = 10
-    env_list = torch.ones((args.total_env_num, 1, discrete_time, 120, 200)).to("cpu")
+    env_list = torch.ones((args.total_env_num, 1, discrete_time, 120, 200))
 
     print("load env ")
 
     if args.load:
         env_list = np.load(os.path.join(args.model_path, 'gps_env_list_planning.npy'))
-        env_list = torch.from_numpy(env_list).to("cpu")
+        env_list = torch.from_numpy(env_list).to(device)
     else:
         for env_num in range(args.total_env_num):
             print("env ", env_num)
             # load environment
             env_grid = load_env(env_num).permute(2, 0, 1)
-            env_grid = TF.resize(env_grid, (120, 200)).to("cpu")
+            env_grid = TF.resize(env_grid, (120, 200)).to(device)
 
             for i in range(discrete_time):
                 env_list[env_num][0][i] = env_grid[i * discrete_time]
 
         ##save in np
-        np.save(os.path.join(args.model_path, 'gps_env_list_planning.npy'), env_list.numpy())
+        np.save(os.path.join(args.model_path, 'gps_env_list_planning.npy'), env_list.cpu().numpy())
 
     dataset = TensorDataset(env_list)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False)

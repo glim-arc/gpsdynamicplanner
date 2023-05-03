@@ -77,6 +77,45 @@ class MotionPlannerGrad(MotionPlanner):
 
         return up_best, cost_min
 
+    def traj_opt(self, up, epoch):
+        logging.debug("%s: Optimizing %d a trajectory without density" % (self.name, self.ego.args.mp_numtraj))
+        t0 = time.time()
+
+        up = up.clamp(self.ego.system.UREF_MIN, self.ego.system.UREF_MAX)
+        up.to(self.device)
+
+        ### 2. make trajectory valid
+        up, costs_dict = self.optimize(up, epoch, initializing=True)
+        self.initial_traj = [up, costs_dict]
+        up_best, cost_min = self.find_best()
+        up_best = up_best.detach()
+        self.best_traj = [up_best, cost_min]
+
+        t_init = time.time() - t0
+
+        logging.debug("%s: Optimized Trajectory with cost %.4f: and time %.4f:" % (self.name, cost_min, t_init))
+
+        return optimized_trajs, up_best, cost_min
+
+    def get_up_cost(self, up, uref_traj, xref_traj):
+        """
+        start motion planner: call optimization/planning function and compute cost
+        """
+
+        self.rms = torch.zeros_like(up, device=self.device)
+        self.momentum = torch.zeros_like(up, device=self.device)
+        self.counts = torch.zeros(up.shape[0], 1, 1)
+        up.requires_grad = True
+
+        self.check_bounds = torch.zeros(up.shape[0], dtype=torch.bool, device=self.device)
+        self.check_collision = torch.zeros(up.shape[0], dtype=torch.bool, device=self.device)
+        self.check_gps = torch.zeros(up.shape[0], dtype=torch.bool, device=self.device)
+
+        cost, cost_dict = self.get_cost_initialize(uref_traj, xref_traj)
+
+        return cost, cost_dict
+
+
     def find_initial_traj(self):
         """
         initialization procedure: find good guess for the reference trajectory without density predicitons

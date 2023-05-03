@@ -10,6 +10,7 @@ from gps_planning.MotionPlannerGrad import MotionPlannerGrad
 import numpy as np
 from mpnet_data.example_objects import create_mp_task
 import os
+import matplotlib.pyplot as plt
 
 
 def plot_traj(self, ego_dict, mp_results, mp_methods, args, folder=None, traj_idx=None, animate=False,

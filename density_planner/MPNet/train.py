@@ -1,133 +1,244 @@
-import argparse
 import os
 import torch
 from torch import nn
 import sys
-print(os.getcwd())
+
 sys.path.append(os.getcwd())
+from gps_MPNet_hyperparams import parse_args
 from mpnet_data.simulation_objects import StaticObstacle, Environment, DynamicObstacle
 import numpy as np
 import hyperparams
 from torch.utils.data import TensorDataset
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
-from MPNet.data_loader import load_dataset
-from model import MLP
+from MPNet.data_loader import load_dataset, load_dataset_recur
+from MPNet.model import MLP
 from mpnet_data.plot import planner_plot
 
+
+def save_generated_traj(args):
+    load_pickle = args.load
+    load_pickle = True
+
+    loaded_data, val_loaded_data = load_dataset_recur(args, load_pickle=load_pickle)
+    shuffle = False
+
+    dataloader = DataLoader(loaded_data, batch_size=1, shuffle=shuffle)
+    val_dataloader = DataLoader(val_loaded_data, batch_size=1, shuffle=shuffle)
+    print("data loaded")
+
+    seed = args.seed
+    torch.manual_seed(seed)
+
+    planner = MLP(args.input_size, args.output_size, args.up_size, args.lstm_hidden_size, args.lstm_layer_size).eval()
+
+    device = "cpu"
+
+    planner.to(device)
+
+    print(device)
+
+    model = torch.load(os.path.join(args.model_path, args.planner_model_name))
+    planner.load_state_dict(model)
+
+    avg_loss_list = []
+
+    if not os.path.exists(args.model_path):
+        os.makedirs(args.model_path)
+
+    print("training data accuracy")
+    mse_loss = nn.MSELoss()
+    training_output_up_list = []
+    avg_loss = []
+
+    for batch_idx, batch in enumerate(dataloader):
+        cur_batch = batch[0].to(device)
+        cur_batch_output = batch[1].to(device)
+
+        planner.zero_grad()
+
+        cur_batch = batch[0].to(device)
+        cur_batch_output = batch[1].to(device)
+        cur_output = []
+
+        for i in range(args.timesteps):
+            # ===================forward=====================
+            up = torch.zeros((cur_batch.shape[0], i + 1, args.up_size)).to(device)  # initial up = 0
+            if i > 0:
+                up[:, 1:] = cur_batch_output[:, :i]
+            output = planner(cur_batch, up, device)
+            loss = mse_loss(output, cur_batch_output[:, i])
+            avg_loss.append(loss.cpu().detach().numpy())
+            cur_output.append(output.cpu().detach().numpy())
+        npoutput = np.array(cur_output)[:,0,:].T
+        training_output_up_list.append(npoutput)
+
+    print("--Training data average loss:")
+    avg_loss = sum(avg_loss) / len(avg_loss)
+    print(avg_loss)
+
+    training_output_up_list = np.array(training_output_up_list)
+    training_output_path = os.path.join(args.data_path, 'training_output_up_list.npy')
+    np.save(training_output_path, training_output_up_list)
+
+    print("validation data accuracy")
+    avg_loss = []
+    validation_output_up_list = []
+
+    for batch_idx, batch in enumerate(val_dataloader):
+        cur_batch = batch[0].to(device)
+        cur_batch_output = batch[1].to(device)
+        cur_output = []
+
+        for i in range(args.timesteps):
+            # ===================forward=====================
+            up = torch.zeros((cur_batch.shape[0], i + 1, args.up_size)).to(device)  # initial up = 0
+            if i > 0:
+                up[:, 1:] = cur_batch_output[:, :i]
+            output = planner(cur_batch, up, device)
+            loss = mse_loss(output, cur_batch_output[:, i])
+            avg_loss.append(loss.cpu().detach().numpy())
+            cur_output.append(output.cpu().detach().numpy())
+
+        npoutput = np.array(cur_output).T
+        validation_output_up_list.append(npoutput)
+
+    print("--Validation average loss:")
+    avg_loss = sum(avg_loss) / len(avg_loss)
+    print(avg_loss)
+
+    validation_output_up_list = np.array(validation_output_up_list)
+    validation_output_path = os.path.join(args.data_path, 'validation_output_up_list.npy')
+    np.save(validation_output_path, validation_output_up_list)
+
+    print(len(training_output_up_list))
+    print(len(validation_output_up_list))
+
+    print("start saving traj data")
+    ### load env and datasets
+    idx = 0
+    for i in range(args.total_env_num):
+        print("load env num ", i)
+        directory = "./mpnet_data/env/" + str(i)
+
+        if idx < len(training_output_up_list) - 1:
+            for j in range(20):
+                cur_train_traj_path = os.path.join(directory, "traj_output_" + str(j) + "_gen.npy")
+                # print(idx)
+                print(training_output_up_list[idx])
+                np.save(cur_train_traj_path, training_output_up_list[idx])
+                # os.remove(cur_train_traj_path)
+                idx += 1
+        else:
+            for j in range(20):
+                cur_val_traj_path = os.path.join(directory, "traj_output_" + str(j) + "_gen.npy")
+                np.save(cur_val_traj_path, validation_output_up_list[idx - len(training_output_up_list)])
+                # os.remove(cur_val_traj_path)
+                idx += 1
+
+    print("end")
+
+
 def main(args):
-	dataloader, val_dataloader = load_dataset(args, True)
-	print("data loaded")
+    load_pickle = args.load
+    load_pickle = True
 
-	seed = 10
-	torch.manual_seed(seed)
+    loaded_data, val_loaded_data = load_dataset_recur(args, load_pickle=load_pickle)
 
-	planner = MLP(args.input_size, args.output_size)
+    dataloader = DataLoader(loaded_data, batch_size=args.batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_loaded_data, batch_size=args.batch_size, shuffle=True)
 
-	device = "cpu"
-	if torch.cuda.is_available():
-		device = "cuda"
-		planner.to(device)
-	
-	print(device)
+    print("data loaded")
 
-	optimizer = torch.optim.Adam(planner.parameters(), lr = 0.001, weight_decay = 0.9)
-	avg_loss_list = []
+    torch.manual_seed(args.seed)
 
-	if not os.path.exists(args.model_path):
-		os.makedirs(args.model_path)
+    planner = MLP(args.input_size, args.output_size, args.up_size, args.lstm_hidden_size, args.lstm_layer_size)
 
-	print("training starts")
+    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    if torch.backends.mps.is_available():
+        device = torch.device("mps")
 
-	avg_loss = []
-	mse_loss = nn.MSELoss()
+    planner.to(device)
+    print(device)
 
-	for epoch in range(args.num_epochs):
-		print("epoch" + str(epoch))
-		cur_batch_loss = []
-		for batch_idx, batch in enumerate(dataloader):
-			optimizer.zero_grad()
-			planner.zero_grad()
+    optimizer = torch.optim.Adam(planner.parameters(), lr=args.learning_rate)
+    avg_loss_list = []
 
-			cur_batch = batch[0].to(device)
-			cur_batch_output =  batch[1].to(device)
+    if not os.path.exists(args.model_path):
+        os.makedirs(args.model_path)
 
-			# ===================forward=====================
-			output = planner(cur_batch)
+    print("training starts")
 
-			loss = mse_loss(output, cur_batch_output)
-			print(loss)
-			cur_batch_loss.append(loss.cpu().detach().numpy())
-			# ===================backward====================
-			loss.backward()
-			optimizer.step()
+    avg_loss = []
+    mse_loss = nn.MSELoss()
 
-		print("--average loss:")
-		avg_loss.append(sum(cur_batch_loss) / len(cur_batch_loss))
-		print(avg_loss[-1])
-		avg_loss_list.append(avg_loss)
+    for epoch in range(args.num_epochs):
+        print("epoch" + str(epoch))
+        cur_batch_loss = []
+        for batch_idx, batch in enumerate(dataloader):
+            optimizer.zero_grad()
+            planner.zero_grad()
 
-	torch.save(planner.state_dict(), os.path.join(args.data_path, 'planner.model'))
-	np.save(os.path.join(data_path, 'planner_avg_loss_list.npy'), avg_loss_list)
+            cur_batch = batch[0].to(device)
+            cur_batch_output = batch[1].to(device)
+            for i in range(args.timesteps):
+                # ===================forward=====================
+                up = torch.zeros((cur_batch.shape[0],i +1, args.up_size)).to(device) #initial up = 0
+                if i > 0:
+                    up[:,1:] = cur_batch_output[:,:i]
+                output = planner(cur_batch, up, device)
+                loss = mse_loss(output, cur_batch_output[:,i])
+                # ===================backward====================
+                loss.backward(retain_graph=True)
+                optimizer.step()
+                loss = loss.cpu().detach().numpy()
+                cur_batch_loss.append(loss)
 
-	print("validation starts")
-	avg_loss = []
-	for batch_idx, batch in enumerate(val_dataloader):
-		batch = dataloader[batch_idx]
+        print("--average loss:")
+        avg_loss_list.append(sum(cur_batch_loss) / len(cur_batch_loss))
+        print(avg_loss_list[-1])
 
-		optimizer.zero_grad()
-		planner.zero_grad()
+    torch.save(planner.state_dict(), os.path.join(args.model_path, 'planner.model'))
+    np.save(os.path.join(args.model_path, 'planner_avg_loss_list.npy'), avg_loss_list)
 
-		cur_batch = batch[0].to(device)
-		cur_batch_output = batch[1].to(device)
+    # model = torch.load(os.path.join(args.model_path, 'planner.model'), map_location=torch.device('cpu'))
+    # planner.load_state_dict(model)
 
-		# ===================forward=====================
-		output = planner(cur_batch)
+    print("validation starts")
+    avg_loss = []
+    mse_loss = nn.MSELoss()
 
-		loss = mse_loss(output, cur_batch_output)
-		avg_loss.append(loss.cpu().detach().numpy())
-		print(batch_idx, " loss :", loss)
+    for batch_idx, batch in enumerate(val_dataloader):
+        planner.zero_grad()
 
-	print("--Validation average loss:")
-	avg_loss = sum(avg_loss) / len(avg_loss)
-	print(avg_loss[-1])
+        cur_batch = batch[0].to(device)
+        cur_batch_output = batch[1].to(device)
 
-	val_loss = np.array(avg_loss)
+        for i in range(args.timesteps):
+            # ===================forward=====================
+            up = torch.zeros((cur_batch.shape[0], i + 1, args.up_size)).to(device)  # initial up = 0
+            if i > 0:
+                up[:, 1:] = cur_batch_output[:, :i]
+            output = planner(cur_batch, up, device)
+            loss = mse_loss(output, cur_batch_output[:, i])
+            loss = loss.cpu().detach().numpy()
+            avg_loss.append(loss)
 
-	np.save(os.path.join(args.model_path, 'planner_val_loss.npy'), val_loss)
-	planner_plot(os.path.join(os.getcwd(), "data"))
+    print("--Validation average loss:")
+    avg_loss = sum(avg_loss) / len(avg_loss)
+    avg_loss = avg_loss
+    print(avg_loss)
+
+    val_loss = np.array(avg_loss)
+
+    np.save(os.path.join(args.data_path, 'planner_val_loss.npy'), val_loss)
+    planner_plot(args.model_path, val_loss)
+    planner_plot(args.model_path, np.array(avg_loss_list[-1]))
+
 
 if __name__ == '__main__':
-	parser = argparse.ArgumentParser()
-	start_size = 5
-	goal_size = 5
-	obs_latent_size = 28
-	gps_latent_size = 2048
-	input_size = gps_latent_size + obs_latent_size + start_size + goal_size  # gps space + obs space + start + goal
-	upsize = 10
-	output_size = upsize
-	load = False
-	num_epochs = 50
-  
-	# mpnet training data generation
-	parser.add_argument('--load', type=bool, default=load)
-	parser.add_argument('--gps_training_data_generation', type=bool, default=True)
-	parser.add_argument('--gps_training_env_path', type=str, default="mpnet_data/env/")
-	parser.add_argument('--num_epochs', type=int, default=num_epochs)
-	parser.add_argument('--total_env_num', type=int, default=500)
-	parser.add_argument('--training_env_num', type=int, default=500)
-	parser.add_argument('--training_traj_num', type=int, default=10)
-	parser.add_argument('--validation_env_num', type=int, default=100)
-	parser.add_argument('--model_path', type=str, default='./mpnet_data/models/', help='path for saving trained models')
-	parser.add_argument('--data_path', type=str, default='./mpnet_data/', help='path for saving data')
-	parser.add_argument('--batch_size', type=int, default=5000)
-	parser.add_argument('--learning_rate', type=float, default=0.001)
-	parser.add_argument('--start_size', type=int, default=start_size)
-	parser.add_argument('--goal_size', type=int, default=goal_size)
-	parser.add_argument('--obs_latent_size', type=int, default=obs_latent_size)
-	parser.add_argument('--gps_latent_size', type=int, default=gps_latent_size)
-	parser.add_argument('--input_size', type=int, default=input_size)
-	parser.add_argument('--output_size', type=int, default=output_size)
-	parser.add_argument('--seed', type=int, default=10)
-	args = parser.parse_args()
-	main(args)
+    args = parse_args()
+    main(args)
+    save_generated_traj(args)
