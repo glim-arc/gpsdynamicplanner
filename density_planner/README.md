@@ -2,10 +2,17 @@
 
 Official Code for "Density Planner: Minimizing Collision Risk in Motion Planning with Dynamic Obstacles using Density-based Reachability"
 
+python -m gps_planning.plan_gps_motion --mp_setting gps --gps_real_env False
+
 ## GPS Planner
 1. GPS planner COMMAND
 ```bash
 python -m gps_planning.plan_gps_motion --mp_setting gps
+```
+
+For real enviornment testing
+```bash
+python -m gps_planning.plan_gps_motion --mp_setting gps --gps_real_env False
 ```
 
 2. MPNET

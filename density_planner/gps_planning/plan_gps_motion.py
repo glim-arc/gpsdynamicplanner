@@ -16,11 +16,11 @@ if __name__ == '__main__':
     else:
         from gps_planning.example_objects import create_mp_task
 
-    args.device = "cuda" if torch.cuda.is_available() else "cpu"
+    #args.device = "cuda" if torch.cuda.is_available() else "cpu"
     # if torch.backends.mps.is_available():
     #     args.device = "mps"
 
-    torch.device(args.device)
+    # torch.device(args.device)
 
     if args.weight_gps_real != 0:
         args.weight_gps = args.weight_gps_real

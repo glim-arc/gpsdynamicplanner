@@ -9,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     ### GPS
-    parser.add_argument('--gps_real_env', type=bool, default=False)
+    parser.add_argument('--gps_real_env', type=bool, default=True)
     parser.add_argument('--gps_real_env_path', type=str, default="gps_data/parsed_maps/")  # directory for the gps_real_env
     parser.add_argument('--gpsgridvisualize', type=bool, default=False)
     parser.add_argument('--gps_test_case', type=bool, default=True)
